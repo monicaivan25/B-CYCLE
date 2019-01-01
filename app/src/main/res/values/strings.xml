@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">B-CYCLE</string>
+    <string name="title_activity_maps">Map</string>
+    <string name="title_activity_user_profile">UserProfile</string>
+    <string name="enter_address">Enter Address</string>
+
+</resources>
