@@ -4,13 +4,11 @@ import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
-import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
@@ -25,11 +23,9 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.example.monica.b_cycle.model.Route;
-import com.example.monica.b_cycle.model.TravelMode;
+import com.example.monica.b_cycle.services.DatabaseService;
 import com.example.monica.b_cycle.services.PlaceAutocompleteAdapter;
 import com.example.monica.b_cycle.services.RouteBuilder;
-import com.example.monica.b_cycle.services.RouteFinder;
-import com.example.monica.b_cycle.services.RouteFinderListener;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
@@ -54,15 +50,7 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PatternItem;
-import com.google.android.gms.maps.model.Polyline;
-import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.database.ChildEventListener;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -87,11 +75,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected PlaceDetectionClient mPlaceDetectionClient;
     private GoogleApiClient mGoogleApiClient;
     private LatLng currentLocationCoordinates;
-    private PolylineOptions bikeRoute;
     private List<PatternItem> polylinePattern = Arrays.asList(new Dot(), new Gap(20));
-    private List<Polyline> polylinePaths = new ArrayList<>();
-
-    private DatabaseReference mRootRef = FirebaseDatabase.getInstance().getReference();
 
     /**
      * Initializes all elements of map and calls method for permission request.
@@ -115,7 +99,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .addApi(Places.PLACE_DETECTION_API)
                 .enableAutoManage(this, this)
                 .build();
-
+        dummydatabase();
         getLocationPermission();
         initMap();
     }
@@ -143,43 +127,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
-    /**
-     * Implements listener for changes on the list of bike lanes and updates the
-     * static list appropriately.
-     */
-    @Override
-    protected void onStart() {
-        super.onStart();
-
-        ChildEventListener childEventListener = new ChildEventListener() {
-            @Override
-            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-                 Route newBikeRoute = dataSnapshot.getValue(Route.class);
-                 bikeRoutes.add(newBikeRoute);
-            }
-
-            @Override
-            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-
-            }
-
-            @Override
-            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
-                Route removedBikeRoute = dataSnapshot.getValue(Route.class);
-                bikeRoutes.remove(removedBikeRoute);
-            }
-
-            @Override
-            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        };
-    }
 
     /**
      * Applies style found in res/raw/style_json.json to map and disables standard GPS button.
@@ -308,8 +255,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      * @param destination destination location as LatLng
      */
     private void findDirection(LatLng origin, LatLng destination) {
-        RouteBuilder routeBuilder = new RouteBuilder(origin, destination, mMap);
-
+        new RouteBuilder(origin, destination, mMap);
     }
 
     /**
@@ -382,6 +328,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
         Log.e(TAG, "Connection Failed: " + connectionResult.getErrorMessage());
+    }
+
+    void dummydatabase(){
+        DatabaseService db = new DatabaseService();
+        db.addToDatabase(new LatLng(47.170095, 27.576226), new LatLng(47.190355, 27.559079));
+        db.addToDatabase(new LatLng(47.173751, 27.539233), new LatLng(47.173378, 27.560231));
+//        db.addToDatabase(new LatLng(), new LatLng());
+//        db.addToDatabase(new LatLng(), new LatLng());
+//        db.addToDatabase(new LatLng(), new LatLng());
+//        db.addToDatabase(new LatLng(), new LatLng());
+//        db.addToDatabase(new LatLng(), new LatLng());
+
     }
 
 }
