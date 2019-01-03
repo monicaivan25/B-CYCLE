@@ -38,7 +38,7 @@ public class RouteBuilder implements RouteFinderListener {
         allRoutes = new ArrayList<>();
     }
 
-    private void drawDriveAndBikeRoute(List<Route> routes) {
+    private void drawWalkAndBikeRoute(List<Route> routes){
         bikeRoute = new PolylineOptions().
                 geodesic(true).
                 color(Color.RED).width(10);
@@ -74,6 +74,85 @@ public class RouteBuilder implements RouteFinderListener {
             road.remove();
         }
         List<LatLng> finalBikePoints = bikePoints;
+        for (Polyline polyline : polylinePaths) {
+            PolylineOptions bikePoly = getNewBikePoly();
+            PolylineOptions roadPoly = getNewWalkPoly();
+            List<LatLng> points = polyline.getPoints();
+            boolean lastPointOnBikeTrail = false;
+            for (LatLng point : points) {
+                boolean pointOnBikeTrail = false;
+
+                for (LatLng bikePoint : finalBikePoints) {
+                    if (pointsAreClose(bikePoint, point)) {
+                        pointOnBikeTrail = true;
+                        break;
+                    }
+                }
+                if (!pointOnBikeTrail) {
+
+                    roadPoly.add((point));
+
+                    if (lastPointOnBikeTrail) {
+                        bikePoly.add(point);
+                    }
+                    mMap.addPolyline(bikePoly);
+                    bikePoly = getNewBikePoly();
+
+                    lastPointOnBikeTrail = false;
+                } else {
+                    bikePoly.add(point);
+                    if (!lastPointOnBikeTrail) {
+                        roadPoly.add(point);
+                    }
+                    mMap.addPolyline(roadPoly);
+                    roadPoly = getNewWalkPoly();
+
+                    lastPointOnBikeTrail = true;
+                }
+            }
+            mMap.addPolyline(roadPoly);
+            mMap.addPolyline(bikePoly);
+        }
+    }
+
+    private void drawDriveAndBikeRoute(List<Route> routes) {
+        bikeRoute = new PolylineOptions().
+                geodesic(true)
+                .width(10);
+        PolylineOptions bikeRoute2 = new PolylineOptions().
+                geodesic(true)
+                .width(10);
+        List<LatLng> bikePoints = new ArrayList<>();
+
+        polylinePaths = new ArrayList<>();
+
+        for (Route route : routes) {
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(route.getOrigin().getLocation(), 16));
+
+            mMap.addMarker(new MarkerOptions()
+                    .position(route.getOrigin().getLocation()).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+
+            PolylineOptions polylineOptions = new PolylineOptions().
+                    geodesic(true).
+                    color(Color.rgb(0, 127, 255)).
+                    pattern(polylinePattern).
+                    width(10);
+            for (int i = 0; i < route.getPointList().size(); i++) {
+                polylineOptions.add(route.getPointList().get(i));
+                if (i > 2 && i < 7)
+                    bikeRoute.add(route.getPointList().get(i));
+                if (i > 20 && i < 57)
+                    bikeRoute2.add(route.getPointList().get(i));
+            }
+            bikePoints = bikeRoute.getPoints();
+            bikePoints.addAll(bikeRoute2.getPoints());
+            Polyline road = mMap.addPolyline(polylineOptions);
+            polylinePaths.add(road);
+            road.remove();
+        }
+        List<LatLng> finalBikePoints = bikePoints;
+
+
         for (Polyline polyline : polylinePaths) {
             PolylineOptions bikePoly = getNewBikePoly();
             PolylineOptions roadPoly = getNewRoadPoly();
@@ -125,7 +204,8 @@ public class RouteBuilder implements RouteFinderListener {
     public void onRouteFinderSuccess(List<Route> routes) {
         allRoutes.addAll(routes);
         drawDriveAndBikeRoute(routes);
-        //TODO: split functiopnalities of walking and driving routes & optimise alg for route building
+        drawWalkAndBikeRoute(routes);
+        //TODO: split functionalities of walking and driving routes & optimise alg for route building
 
     }
 
@@ -148,7 +228,7 @@ public class RouteBuilder implements RouteFinderListener {
     private PolylineOptions getNewRoadPoly() {
         return new PolylineOptions()
                 .geodesic(true)
-                .color(Color.rgb(0, 127, 255))
+                .color(Color.rgb(0, 128, 255))
                 .pattern(polylinePattern).width(10);
     }
 
@@ -157,8 +237,21 @@ public class RouteBuilder implements RouteFinderListener {
      */
     private PolylineOptions getNewBikePoly() {
         return new PolylineOptions()
-                .geodesic(true).color(Color.CYAN).width(12);
+                .geodesic(true)
+                .color(Color.rgb(0, 128, 128))
+                .width(12);
     }
+
+    /**
+     * @return New custom Polyline signifying Sidewalks
+     */
+    private PolylineOptions getNewWalkPoly() {
+        return new PolylineOptions()
+                .geodesic(true)
+                .color(Color.rgb(0, 128, 0))
+                .pattern(polylinePattern).width(10);
+    }
+
 
     public List<Route> getDrivingRoutes() {
         return drivingRoutes;

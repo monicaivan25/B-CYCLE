@@ -10,6 +10,7 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
@@ -56,6 +57,12 @@ import com.google.android.gms.maps.model.PatternItem;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -63,6 +70,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener {
+
+    public static List<Route> bikeRoutes = new ArrayList<>();
 
     private final String TAG = "MapsActivity";
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1234;
@@ -81,6 +90,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private PolylineOptions bikeRoute;
     private List<PatternItem> polylinePattern = Arrays.asList(new Dot(), new Gap(20));
     private List<Polyline> polylinePaths = new ArrayList<>();
+
+    private DatabaseReference mRootRef = FirebaseDatabase.getInstance().getReference();
 
     /**
      * Initializes all elements of map and calls method for permission request.
@@ -130,6 +141,44 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             mMap.setMyLocationEnabled(true);
             initGpsButton();
         }
+    }
+
+    /**
+     * Implements listener for changes on the list of bike lanes and updates the
+     * static list appropriately.
+     */
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        ChildEventListener childEventListener = new ChildEventListener() {
+            @Override
+            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                 Route newBikeRoute = dataSnapshot.getValue(Route.class);
+                 bikeRoutes.add(newBikeRoute);
+            }
+
+            @Override
+            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
+            }
+
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
+                Route removedBikeRoute = dataSnapshot.getValue(Route.class);
+                bikeRoutes.remove(removedBikeRoute);
+            }
+
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        };
     }
 
     /**
@@ -254,7 +303,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      * Creates a new RouteBuilder to call upon the Google Directions request URL
      * to query about different routes from origin to destination.
      * Builds route as per user request.
-     * @param origin origin location as LatLng
+     *
+     * @param origin      origin location as LatLng
      * @param destination destination location as LatLng
      */
     private void findDirection(LatLng origin, LatLng destination) {
@@ -326,6 +376,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     /**
      * Method overrun from GoogleApiClient
+     *
      * @param connectionResult
      */
     @Override

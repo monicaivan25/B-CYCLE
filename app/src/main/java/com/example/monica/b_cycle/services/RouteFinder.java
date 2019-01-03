@@ -1,6 +1,5 @@
 package com.example.monica.b_cycle.services;
 
-import com.example.monica.b_cycle.R;
 import com.example.monica.b_cycle.model.Distance;
 import com.example.monica.b_cycle.model.Duration;
 import com.example.monica.b_cycle.model.Route;
