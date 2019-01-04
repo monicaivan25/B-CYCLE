@@ -1,16 +1,14 @@
 package com.example.monica.b_cycle.model;
 
-import com.google.android.gms.maps.model.LatLng;
-
-public class SimpleAddress {
+public class SimpleAddressDAO {
 
     private String name;
-    private LatLng location;
+    private MyLatLng location;
 
-    public SimpleAddress() {
+    public SimpleAddressDAO() {
     }
 
-    public SimpleAddress(String name, LatLng location) {
+    public SimpleAddressDAO(String name, MyLatLng location) {
         this.name = name;
         this.location = location;
     }
@@ -23,11 +21,11 @@ public class SimpleAddress {
         this.name = name;
     }
 
-    public LatLng getLocation() {
+    public MyLatLng getLocation() {
         return location;
     }
 
-    public void setLocation(LatLng location) {
+    public void setLocation(MyLatLng location) {
         this.location = location;
     }
 }

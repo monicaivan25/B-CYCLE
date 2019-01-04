@@ -1,25 +1,22 @@
 package com.example.monica.b_cycle.model;
 
-import com.google.android.gms.maps.model.LatLng;
-
 import java.util.List;
 
-public class Route {
-
+public class RouteDao {
     private Distance distance;
     private Duration duration;
     private List<Elevation> elevationList;
-    private SimpleAddress origin;
-    private SimpleAddress destination;
+    private SimpleAddressDAO origin;
+    private SimpleAddressDAO destination;
     private Speed recordedSpeed;
-    private List<LatLng> pointList;
+    private List<MyLatLng> pointList;
 
     private TravelMode travelMode;
 
-    public Route() {
+    public RouteDao() {
     }
 
-    public Route(Distance distance, Duration duration, List<Elevation> elevationList, SimpleAddress origin, SimpleAddress destination, Speed recordedSpeed, List<LatLng> pointList, TravelMode travelMode) {
+    public RouteDao(Distance distance, Duration duration, List<Elevation> elevationList, SimpleAddressDAO origin, SimpleAddressDAO destination, Speed recordedSpeed, List<MyLatLng> pointList, TravelMode travelMode) {
         this.distance = distance;
         this.duration = duration;
         this.elevationList = elevationList;
@@ -54,19 +51,19 @@ public class Route {
         this.elevationList = elevationList;
     }
 
-    public SimpleAddress getOrigin() {
+    public SimpleAddressDAO getOrigin() {
         return origin;
     }
 
-    public void setOrigin(SimpleAddress origin) {
+    public void setOrigin(SimpleAddressDAO origin) {
         this.origin = origin;
     }
 
-    public SimpleAddress getDestination() {
+    public SimpleAddressDAO getDestination() {
         return destination;
     }
 
-    public void setDestination(SimpleAddress destination) {
+    public void setDestination(SimpleAddressDAO destination) {
         this.destination = destination;
     }
 
@@ -78,11 +75,11 @@ public class Route {
         this.recordedSpeed = recordedSpeed;
     }
 
-    public List<LatLng> getPointList() {
+    public List<MyLatLng> getPointList() {
         return pointList;
     }
 
-    public void setPointList(List<LatLng> pointList) {
+    public void setPointList(List<MyLatLng> pointList) {
         this.pointList = pointList;
     }
 
@@ -92,19 +89,5 @@ public class Route {
 
     public void setTravelMode(TravelMode travelMode) {
         this.travelMode = travelMode;
-    }
-
-    @Override
-    public String toString() {
-        return "Route{" +
-                "distance=" + distance +
-                ", duration=" + duration +
-                ", elevationList=" + elevationList +
-                ", origin=" + origin +
-                ", destination=" + destination +
-                ", recordedSpeed=" + recordedSpeed +
-                ", pointList=" + pointList +
-                ", travelMode=" + travelMode +
-                '}';
     }
 }

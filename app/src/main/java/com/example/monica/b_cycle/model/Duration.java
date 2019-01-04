@@ -5,6 +5,9 @@ public class Duration {
     private String text;
     private Integer value;
 
+    public Duration() {
+    }
+
     public Duration(String text, Integer value) {
         this.text = text;
         this.value = value;
