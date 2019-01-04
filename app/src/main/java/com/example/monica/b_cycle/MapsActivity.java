@@ -256,6 +256,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      */
     private void findDirection(LatLng origin, LatLng destination) {
         new RouteBuilder(origin, destination, mMap);
+
     }
 
     /**
@@ -331,10 +332,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     void dummydatabase(){
-        DatabaseService db = new DatabaseService();
-        db.addToDatabase(new LatLng(47.170095, 27.576226), new LatLng(47.190355, 27.559079));
-        db.addToDatabase(new LatLng(47.173751, 27.539233), new LatLng(47.173378, 27.560231));
-//        db.addToDatabase(new LatLng(), new LatLng());
+        DatabaseService db = new DatabaseService(this);
+//        db.addToDatabase(new LatLng(47.170095, 27.576226), new LatLng(47.190355, 27.559079));
+//        db.addToDatabase(new LatLng(47.173751, 27.539233), new LatLng(47.173378, 27.560231));
+        db.addToDatabase(new LatLng(47.169090, 27.577570), new LatLng(47.162010, 27.594817));
 //        db.addToDatabase(new LatLng(), new LatLng());
 //        db.addToDatabase(new LatLng(), new LatLng());
 //        db.addToDatabase(new LatLng(), new LatLng());
@@ -342,4 +343,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
+    public void notifyUser(String message){
+        Toast.makeText(MapsActivity.this, message, Toast.LENGTH_SHORT).show();
+    }
 }

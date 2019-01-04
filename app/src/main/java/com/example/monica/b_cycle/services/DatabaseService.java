@@ -22,9 +22,11 @@ public class DatabaseService implements RouteFinderListener {
 
     private DatabaseReference mRootRef;
     private RouteDaoMapper mapper = new RouteDaoMapper();
+    private MapsActivity mMap;
 
-    public DatabaseService() {
+    public DatabaseService(MapsActivity mMap) {
         this.mRootRef = FirebaseDatabase.getInstance().getReference();
+        this.mMap = mMap;
         readData();
         addChildListeners();
     }
@@ -34,10 +36,8 @@ public class DatabaseService implements RouteFinderListener {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 for (DataSnapshot child : dataSnapshot.getChildren()) {
-                    RouteDao route = child.getValue(RouteDao.class);
-                    Route r = mapper.map(route);
-                    MapsActivity.bikeRoutes.add(mapper.map(route));
-                    Log.d("LATIPULA", r.toString());
+                    RouteDao routeDao = child.getValue(RouteDao.class);
+                    MapsActivity.bikeRoutes.add(mapper.map(routeDao));
                 }
             }
 
@@ -56,6 +56,7 @@ public class DatabaseService implements RouteFinderListener {
                 // Route route = dataSnapshot.getValue(Route.class);
                 //TODO: Momentan pot adauga rute cu addToDatabase() si AICI primesc notificari cand este adaugata o ruta noua.
                 Log.d("YEEEEEEEEEE", dataSnapshot.getValue().toString());
+                mMap.notifyUser("New Bike Lane available for review");
             }
 
             @Override
