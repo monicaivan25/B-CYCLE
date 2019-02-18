@@ -335,7 +335,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         DatabaseService db = new DatabaseService(this);
 //        db.addToDatabase(new LatLng(47.170095, 27.576226), new LatLng(47.190355, 27.559079));
 //        db.addToDatabase(new LatLng(47.173751, 27.539233), new LatLng(47.173378, 27.560231));
-        db.addToDatabase(new LatLng(47.169090, 27.577570), new LatLng(47.162010, 27.594817));
+//        db.addToDatabase(new LatLng(47.169090, 27.577570), new LatLng(47.162010, 27.594817));
 //        db.addToDatabase(new LatLng(), new LatLng());
 //        db.addToDatabase(new LatLng(), new LatLng());
 //        db.addToDatabase(new LatLng(), new LatLng());

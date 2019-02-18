@@ -1,18 +1,15 @@
 package com.example.monica.b_cycle.services;
 
 import android.graphics.Color;
-import android.util.Log;
 
 import com.example.monica.b_cycle.MapsActivity;
 import com.example.monica.b_cycle.model.Route;
 import com.example.monica.b_cycle.model.TravelMode;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.Dot;
 import com.google.android.gms.maps.model.Gap;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PatternItem;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.maps.android.PolyUtil;
@@ -52,10 +49,8 @@ public class RouteBuilder implements RouteFinderListener {
         PolylineOptions roadPoly = getNewRoadPoly();
         List<LatLng> points = route.getPointList();
 
-
         PolylineOptions polylineOptions = new PolylineOptions()
                 .addAll(route.getPointList());
-
 
         boolean lastPointOnBikeTrail = false;
         for (LatLng point : points) {
@@ -96,7 +91,7 @@ public class RouteBuilder implements RouteFinderListener {
      *
      * @param routes
      */
-    public void drawDriveAndBikeRoute(List<Route> routes) {
+    private void drawDriveAndBikeRoute(List<Route> routes) {
 
         List<LatLng> allBikePoints = new ArrayList<>();
         MapsActivity.bikeRoutes.forEach(route -> {
@@ -120,7 +115,7 @@ public class RouteBuilder implements RouteFinderListener {
 
                 if (arePointsClose(bikePoint, lastPoint, point)) {
                     pointOnBikeTrail = true;
-                    mMap.addMarker(new MarkerOptions().position(bikePoint));
+//                    mMap.addMarker(new MarkerOptions().position(bikePoint));
                     break;
                 }
             }
@@ -178,7 +173,7 @@ public class RouteBuilder implements RouteFinderListener {
     private PolylineOptions getNewBikePoly() {
         return new PolylineOptions()
                 .geodesic(true)
-                .color(Color.rgb(0, 128, 128))
+                .color(Color.rgb(0, 128, 255))
                 .width(12);
     }
 
@@ -256,7 +251,6 @@ public class RouteBuilder implements RouteFinderListener {
     }
 
 
-
     /**
      * Function to determine whether a point is close enough to the line created
      * by two other points.
@@ -291,8 +285,8 @@ public class RouteBuilder implements RouteFinderListener {
     boolean longitudeBetween(LatLng x, LatLng a, LatLng b) {
         return (((x.longitude < a.longitude) && (x.longitude > b.longitude))
                 || ((x.longitude > a.longitude) && (x.longitude < b.longitude))
-        || Math.abs(a.longitude - x.longitude) <= TOLERANCE
-        || Math.abs(b.longitude - x.longitude) <= TOLERANCE);
+                || Math.abs(a.longitude - x.longitude) <= TOLERANCE
+                || Math.abs(b.longitude - x.longitude) <= TOLERANCE);
     }
 
     boolean latitudeBetween(LatLng x, LatLng a, LatLng b) {
@@ -309,12 +303,13 @@ public class RouteBuilder implements RouteFinderListener {
                 / Math.sqrt((b.longitude - a.longitude) * (b.longitude - a.longitude)
                 + (b.latitude - a.latitude) * (b.latitude - a.latitude));
     }
-    boolean tooFar(LatLng x, LatLng a, LatLng b){
-        if(Math.min(
+
+    boolean tooFar(LatLng x, LatLng a, LatLng b) {
+        if (Math.min(
                 Math.abs(x.longitude - a.longitude),
                 Math.abs(x.longitude - b.longitude)) > TOLERANCE)
             return true;
-        if(Math.min(
+        if (Math.min(
                 Math.abs(x.latitude - a.latitude),
                 Math.abs(x.latitude - b.latitude)) > TOLERANCE)
             return true;

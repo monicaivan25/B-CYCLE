@@ -18,7 +18,7 @@ import java.util.List;
 public class RouteFinder {
 
     private final String DIRECTIONS_URL = "https://maps.googleapis.com/maps/api/directions/json?";
-    private final String GOOGLE_API_KEY = "AIzaSyC6RY5iSitcNdcdw3MUdPPidRd4ymiRmYw";
+    private final String GOOGLE_API_KEY = "AIzaSyAzEnSbPCaBHN-Txq0JcsoorIdQxPKTHwU";
 
     private LatLng origin;
     private LatLng destination;
