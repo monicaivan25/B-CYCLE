@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "169820581838",
+    "firebase_url": "https://b-cycle.firebaseio.com",
+    "project_id": "b-cycle",
+    "storage_bucket": "b-cycle.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:169820581838:android:d788877fa0836a3e",
+        "android_client_info": {
+          "package_name": "com.example.monica.b_cycle"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "169820581838-a6k4468de8d3hta88gp6c1ouee9aigku.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC2vmBJyRZ7HfOjKwMAOCUKcHS9-Q2LCxo"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

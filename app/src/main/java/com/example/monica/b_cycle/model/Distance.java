@@ -6,6 +6,9 @@ public class Distance {
     private String text;
     private Integer value;
 
+    public Distance() {
+    }
+
     public Distance(String text, Integer value) {
         this.text = text;
         this.value = value;

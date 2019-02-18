@@ -4,7 +4,6 @@ import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
-import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -24,11 +23,9 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.example.monica.b_cycle.model.Route;
-import com.example.monica.b_cycle.model.TravelMode;
+import com.example.monica.b_cycle.services.DatabaseService;
 import com.example.monica.b_cycle.services.PlaceAutocompleteAdapter;
 import com.example.monica.b_cycle.services.RouteBuilder;
-import com.example.monica.b_cycle.services.RouteFinder;
-import com.example.monica.b_cycle.services.RouteFinderListener;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
@@ -53,8 +50,6 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PatternItem;
-import com.google.android.gms.maps.model.Polyline;
-import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.Task;
 
 import java.io.IOException;
@@ -63,6 +58,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener {
+
+    public static List<Route> bikeRoutes = new ArrayList<>();
 
     private final String TAG = "MapsActivity";
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1234;
@@ -78,9 +75,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected PlaceDetectionClient mPlaceDetectionClient;
     private GoogleApiClient mGoogleApiClient;
     private LatLng currentLocationCoordinates;
-    private PolylineOptions bikeRoute;
     private List<PatternItem> polylinePattern = Arrays.asList(new Dot(), new Gap(20));
-    private List<Polyline> polylinePaths = new ArrayList<>();
 
     /**
      * Initializes all elements of map and calls method for permission request.
@@ -104,7 +99,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .addApi(Places.PLACE_DETECTION_API)
                 .enableAutoManage(this, this)
                 .build();
-
+        dummydatabase();
         getLocationPermission();
         initMap();
     }
@@ -131,6 +126,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             initGpsButton();
         }
     }
+
 
     /**
      * Applies style found in res/raw/style_json.json to map and disables standard GPS button.
@@ -254,11 +250,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      * Creates a new RouteBuilder to call upon the Google Directions request URL
      * to query about different routes from origin to destination.
      * Builds route as per user request.
-     * @param origin origin location as LatLng
+     *
+     * @param origin      origin location as LatLng
      * @param destination destination location as LatLng
      */
     private void findDirection(LatLng origin, LatLng destination) {
-        RouteBuilder routeBuilder = new RouteBuilder(origin, destination, mMap);
+        new RouteBuilder(origin, destination, mMap);
 
     }
 
@@ -326,6 +323,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     /**
      * Method overrun from GoogleApiClient
+     *
      * @param connectionResult
      */
     @Override
@@ -333,4 +331,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Log.e(TAG, "Connection Failed: " + connectionResult.getErrorMessage());
     }
 
+    void dummydatabase(){
+        DatabaseService db = new DatabaseService(this);
+//        db.addToDatabase(new LatLng(47.170095, 27.576226), new LatLng(47.190355, 27.559079));
+//        db.addToDatabase(new LatLng(47.173751, 27.539233), new LatLng(47.173378, 27.560231));
+//        db.addToDatabase(new LatLng(47.169090, 27.577570), new LatLng(47.162010, 27.594817));
+//        db.addToDatabase(new LatLng(), new LatLng());
+//        db.addToDatabase(new LatLng(), new LatLng());
+//        db.addToDatabase(new LatLng(), new LatLng());
+//        db.addToDatabase(new LatLng(), new LatLng());
+
+    }
+
+    public void notifyUser(String message){
+        Toast.makeText(MapsActivity.this, message, Toast.LENGTH_SHORT).show();
+    }
 }
