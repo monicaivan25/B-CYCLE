@@ -22,6 +22,7 @@ import android.widget.AutoCompleteTextView;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.example.monica.b_cycle.exceptions.LocationNotFoundException;
 import com.example.monica.b_cycle.model.Route;
 import com.example.monica.b_cycle.services.DatabaseService;
 import com.example.monica.b_cycle.services.PlaceAutocompleteAdapter;
@@ -34,7 +35,6 @@ import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.places.AutocompletePrediction;
 import com.google.android.gms.location.places.GeoDataClient;
-import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.PlaceBuffer;
 import com.google.android.gms.location.places.PlaceDetectionClient;
 import com.google.android.gms.location.places.Places;
@@ -67,15 +67,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private static final LatLngBounds LAT_LNG_BOUNDS = new LatLngBounds(new LatLng(-40, -168), new LatLng(71, 136));
     private GoogleMap mMap;
     private Boolean mLocationPermissionGranted = false;
-    private AutoCompleteTextView mSearchText;
+    private AutoCompleteTextView mOrigin;
+    private AutoCompleteTextView mDestination;
     private ImageView mGpsButton;
     private ImageView mSearchButton;
-    private PlaceAutocompleteAdapter mPlaceAutocompleteAdapter;
+    private PlaceAutocompleteAdapter mDestinationAutocompleteAdapter;
+    private PlaceAutocompleteAdapter mOriginPlaceAutocompleteAdapter;
+
     protected GeoDataClient mGeoDataClient;
     protected PlaceDetectionClient mPlaceDetectionClient;
     private GoogleApiClient mGoogleApiClient;
     private LatLng currentLocationCoordinates;
     private List<PatternItem> polylinePattern = Arrays.asList(new Dot(), new Gap(20));
+
+    private LatLng origin;
+    private LatLng destination;
 
     /**
      * Initializes all elements of map and calls method for permission request.
@@ -87,7 +93,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
 
-        mSearchText = findViewById(R.id.input_search);
+        mOrigin = findViewById(R.id.input_origin);
+        mDestination = findViewById(R.id.input_destination);
         mGpsButton = findViewById(R.id.ic_gps);
         mSearchButton = findViewById(R.id.ic_magnify);
 
@@ -108,13 +115,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      * Manipulates the map once available.
      * This callback is triggered when the map is ready to be used.
      * Applies style to map and initializes search bar.
-     * If
      */
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         applyStyle();
-        initSearchBar();
+        initOriginBar();
+        initDestinationBar();
+        initGpsButton();
+        initSearchButton();
 
         if (mLocationPermissionGranted) {
             getDeviceLocation();
@@ -122,9 +131,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 return;
             }
-            mMap.setMyLocationEnabled(true);
-            initGpsButton();
         }
+
     }
 
 
@@ -151,20 +159,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      * Geolocates and moves camera to the first address found
      * that matches the text in the search bar.
      */
-    private void geoLocate() {
+    private LatLng geoLocate() {
         Geocoder geocoder = new Geocoder(MapsActivity.this);
         List<Address> list = new ArrayList<>();
 
         try {
-            list = geocoder.getFromLocationName(mSearchText.getText().toString(), 1);
+            list = geocoder.getFromLocationName(mDestination.getText().toString(), 1);
         } catch (IOException e) {
             Log.e(TAG, "geoLocate: IOException: " + e.getMessage());
         }
         if (list.size() > 0) {
             Address address = list.get(0);
-            moveCamera(new LatLng(address.getLatitude(), address.getLongitude()), DEFAULT_ZOOM, true);
-            findDirection(currentLocationCoordinates, new LatLng(address.getLatitude(), address.getLongitude()));
+            return new LatLng(address.getLatitude(), address.getLongitude());
         }
+        throw new LocationNotFoundException();
     }
 
     /**
@@ -179,20 +187,41 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     /**
-     * Sets the autocomplete click listener as the search bar on click listener.
+     * Sets the autocomplete click listener as the origin search bar on click listener.
      * Sets the autocomplete adapter as the search bar's adapter.
      * Sets on editor listener for "done", "search", "down" or "enter".
      */
-    private void initSearchBar() {
-        mSearchText.setOnItemClickListener(mAutoCompleteClickListener);
-        mPlaceAutocompleteAdapter = new PlaceAutocompleteAdapter(this, mGeoDataClient, LAT_LNG_BOUNDS, null);
-        mSearchText.setAdapter(mPlaceAutocompleteAdapter);
-        mSearchText.setOnEditorActionListener((v, actionId, event) -> {
+    private void initOriginBar() {
+        mOrigin.setOnItemClickListener(mOriginAutoCompleteClickListener);
+        mOriginPlaceAutocompleteAdapter = new PlaceAutocompleteAdapter(this, mGeoDataClient, LAT_LNG_BOUNDS, null);
+        mOrigin.setAdapter(mOriginPlaceAutocompleteAdapter);
+        mOrigin.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_SEARCH
                     || actionId == EditorInfo.IME_ACTION_DONE
                     || event.getAction() == KeyEvent.ACTION_DOWN
                     || event.getAction() == KeyEvent.KEYCODE_ENTER) {
-                geoLocate();
+                origin = geoLocate();
+            }
+            return false;
+        });
+    }
+
+    /**
+     * Sets the autocomplete click listener as the destination search bar on click listener.
+     * Sets the autocomplete adapter as the search bar's adapter.
+     * Sets on editor listener for "done", "search", "down" or "enter".
+     */
+    private void initDestinationBar() {
+        mDestination.setOnItemClickListener(mDestinationAutoCompleteClickListener);
+        mDestinationAutocompleteAdapter = new PlaceAutocompleteAdapter(this, mGeoDataClient, LAT_LNG_BOUNDS, null);
+        mDestination.setAdapter(mDestinationAutocompleteAdapter);
+        mDestination.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_SEARCH
+                    || actionId == EditorInfo.IME_ACTION_DONE
+                    || event.getAction() == KeyEvent.ACTION_DOWN
+                    || event.getAction() == KeyEvent.KEYCODE_ENTER) {
+                destination = geoLocate();
+                findDirection();
             }
             return false;
         });
@@ -203,7 +232,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      */
     private void initGpsButton() {
         mGpsButton.setOnClickListener(v -> getDeviceLocation());
+        mGpsButton.setOnLongClickListener(v-> {
+            getDeviceLocation();
+            origin = currentLocationCoordinates;
+            mOrigin.setText("My Location");
+            return true;
+        });
     }
+
+    private void initSearchButton() {
+        mSearchButton.setOnClickListener(v -> {
+            if (origin != null && destination != null) {
+                findDirection();
+            }
+    });
+}
 
     /**
      * If the user granted permission to his location, then it zooms in on his location.
@@ -216,15 +259,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 Task location = mFusedLocationProviderClient.getLastLocation();
                 location.addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
+                        mMap.setMyLocationEnabled(true);
                         Location currentLocation = (Location) task.getResult();
                         currentLocationCoordinates = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
+                        if (origin == null) {
+                            origin = currentLocationCoordinates;
+                        }
                         moveCamera(currentLocationCoordinates, DEFAULT_ZOOM, false);
                     } else {
-                        Toast.makeText(MapsActivity.this, "Unable to get current location", Toast.LENGTH_SHORT).show();
+                        notifyUser("Unable to get current location");
                     }
                 });
             } else {
-                Toast.makeText(MapsActivity.this, "Permission not granted for device location", Toast.LENGTH_LONG).show();
+                notifyUser("Permission not granted for device location");
             }
         } catch (SecurityException e) {
             Log.d(TAG, "getDeviceLocation: " + e.getMessage());
@@ -237,12 +284,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      */
     private void getLocationPermission() {
         String[] permissions = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
-        if (ContextCompat.checkSelfPermission(this.getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-                || ContextCompat.checkSelfPermission(this.getApplicationContext(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(this.getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             mLocationPermissionGranted = true;
         } else {
             ActivityCompat.requestPermissions(this, permissions,
                     LOCATION_PERMISSION_REQUEST_CODE);
+
         }
     }
 
@@ -250,13 +297,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      * Creates a new RouteBuilder to call upon the Google Directions request URL
      * to query about different routes from origin to destination.
      * Builds route as per user request.
-     *
-     * @param origin      origin location as LatLng
-     * @param destination destination location as LatLng
      */
-    private void findDirection(LatLng origin, LatLng destination) {
+    private void findDirection() {
+        mMap.clear();
         new RouteBuilder(origin, destination, mMap);
-
+        mMap.addMarker(new MarkerOptions()
+                    .position(origin)
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+        moveCamera(destination, DEFAULT_ZOOM, true);
     }
 
     /**
@@ -269,7 +317,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      *                     will move to the selected location without adding a marker
      */
     public void moveCamera(LatLng latLng, float zoom, boolean markerWanted) {
-        mMap.clear();
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
         if (markerWanted) {
             mMap.addMarker(new MarkerOptions()
@@ -290,36 +337,66 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     /**
-     * IDK
+     * Listener for the autocomplete suggestions given to the user for the origin
      */
-    private AdapterView.OnItemClickListener mAutoCompleteClickListener = new AdapterView.OnItemClickListener() {
+    private AdapterView.OnItemClickListener mOriginAutoCompleteClickListener = new AdapterView.OnItemClickListener() {
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
-            final AutocompletePrediction item = mPlaceAutocompleteAdapter.getItem(position);
+            final AutocompletePrediction item = mOriginPlaceAutocompleteAdapter.getItem(position);
             final String placeId = item.getPlaceId();
             PendingResult<PlaceBuffer> placeBufferPendingResult = Places.GeoDataApi.getPlaceById(mGoogleApiClient, placeId);
-            placeBufferPendingResult.setResultCallback(mUpdatePlaceDetailsCallback);
+            placeBufferPendingResult.setResultCallback(mUpdatePlaceDetailsForOriginCallback);
         }
     };
 
     /**
-     * IDK
+     * Listener for the autocomplete suggestions given to the user for the destination
      */
-    private ResultCallback<PlaceBuffer> mUpdatePlaceDetailsCallback = places -> {
+    private AdapterView.OnItemClickListener mDestinationAutoCompleteClickListener = new AdapterView.OnItemClickListener() {
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+            final AutocompletePrediction item = mDestinationAutocompleteAdapter.getItem(position);
+            final String placeId = item.getPlaceId();
+            PendingResult<PlaceBuffer> placeBufferPendingResult = Places.GeoDataApi.getPlaceById(mGoogleApiClient, placeId);
+            placeBufferPendingResult.setResultCallback(mUpdatePlaceDetailsForDestinationCallback);
+        }
+    };
+
+    /**
+     * Callback for when we receive the Place object corespondent to the autocomplete selected by the user
+     * Callback for the origin AutoCompleteTextView
+     */
+    private ResultCallback<PlaceBuffer> mUpdatePlaceDetailsForOriginCallback = places -> {
         hideKeyboard();
 
         if (!places.getStatus().isSuccess()) {
             Log.d(TAG, "onResult: " + places.getStatus().toString());
             places.release();
         } else {
-            final Place place = places.get(0);
-
-            moveCamera(place.getLatLng(), DEFAULT_ZOOM, true);
-            findDirection(currentLocationCoordinates, place.getLatLng());
+            origin = places.get(0).getLatLng();
             places.release();
         }
     };
+
+    /**
+     * Callback for when we receive the Place object corespondent to the autocomplete selected by the user
+     * Callback for the destination AutoCompleteTextView
+     */
+    private ResultCallback<PlaceBuffer> mUpdatePlaceDetailsForDestinationCallback = places -> {
+        hideKeyboard();
+
+        if (!places.getStatus().isSuccess()) {
+            Log.d(TAG, "onResult: " + places.getStatus().toString());
+            places.release();
+        } else {
+            destination = places.get(0).getLatLng();
+            places.release();
+            findDirection();
+        }
+    };
+
 
     /**
      * Method overrun from GoogleApiClient
@@ -331,7 +408,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Log.e(TAG, "Connection Failed: " + connectionResult.getErrorMessage());
     }
 
-    void dummydatabase(){
+    void dummydatabase() {
         DatabaseService db = new DatabaseService(this);
 //        db.addToDatabase(new LatLng(47.170095, 27.576226), new LatLng(47.190355, 27.559079));
 //        db.addToDatabase(new LatLng(47.173751, 27.539233), new LatLng(47.173378, 27.560231));
@@ -343,7 +420,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
-    public void notifyUser(String message){
+    public void notifyUser(String message) {
         Toast.makeText(MapsActivity.this, message, Toast.LENGTH_SHORT).show();
     }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE && grantResults.length > 0) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                mLocationPermissionGranted = true;
+                getDeviceLocation();
+            }
+        }
+    }
+
+
 }

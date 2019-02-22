@@ -15,7 +15,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RouteFinder {
+class RouteFinder {
 
     private final String DIRECTIONS_URL = "https://maps.googleapis.com/maps/api/directions/json?";
     private final String GOOGLE_API_KEY = "AIzaSyAzEnSbPCaBHN-Txq0JcsoorIdQxPKTHwU";
@@ -26,7 +26,7 @@ public class RouteFinder {
     private List<Route> routes = new ArrayList<>();
     private RouteFinderListener routeFinderListener;
 
-    public RouteFinder(LatLng origin, LatLng destination, TravelMode travelMode, RouteFinderListener routeFinderListener) {
+    RouteFinder(LatLng origin, LatLng destination, TravelMode travelMode, RouteFinderListener routeFinderListener) {
         this.travelMode = travelMode;
         this.origin = origin;
         this.destination = destination;
@@ -49,7 +49,7 @@ public class RouteFinder {
      * Creates a new Async instance of JsonDownloader in order to retrieve the details
      * from the URL created.
      */
-    public void findRoute(){
+    void findRoute(){
         new JsonDownloader(this).execute(createURL());
     }
 
