@@ -18,6 +18,8 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.List;
 
+import static com.example.monica.b_cycle.MapsActivity.bikeRoutes;
+
 public class DatabaseService implements RouteFinderListener {
 
     private DatabaseReference mRootRef;
@@ -37,7 +39,7 @@ public class DatabaseService implements RouteFinderListener {
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 for (DataSnapshot child : dataSnapshot.getChildren()) {
                     RouteDao routeDao = child.getValue(RouteDao.class);
-                    MapsActivity.bikeRoutes.add(mapper.map(routeDao));
+                    bikeRoutes.add(mapper.map(routeDao));
                 }
             }
 
@@ -81,13 +83,17 @@ public class DatabaseService implements RouteFinderListener {
         });
     }
 
-    public void addToDatabase(LatLng origin, LatLng destination) {
-        new RouteFinder(origin, destination, TravelMode.DRIVING, this).findRoute();
+    public void addToDatabase(LatLng origin, LatLng destination, TravelMode travelMode) {
+        new RouteFinder(origin, destination, travelMode, this).findRoute();
     }
+
+
 
     @Override
     public void onRouteFinderSuccess(List<Route> routes) {
         DatabaseReference newRouteRef = mRootRef.push();
         newRouteRef.setValue(mapper.map(routes.get(0)));
     }
+
+
 }

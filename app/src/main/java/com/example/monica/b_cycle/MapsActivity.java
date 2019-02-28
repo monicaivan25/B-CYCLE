@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -24,6 +25,7 @@ import android.widget.Toast;
 
 import com.example.monica.b_cycle.exceptions.LocationNotFoundException;
 import com.example.monica.b_cycle.model.Route;
+import com.example.monica.b_cycle.model.TravelMode;
 import com.example.monica.b_cycle.services.DatabaseService;
 import com.example.monica.b_cycle.services.PlaceAutocompleteAdapter;
 import com.example.monica.b_cycle.services.RouteBuilder;
@@ -50,13 +52,13 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PatternItem;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.Task;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener {
 
     public static List<Route> bikeRoutes = new ArrayList<>();
@@ -71,6 +73,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private AutoCompleteTextView mDestination;
     private ImageView mGpsButton;
     private ImageView mSearchButton;
+    private ImageView mShowBikeLanesButton;
     private PlaceAutocompleteAdapter mDestinationAutocompleteAdapter;
     private PlaceAutocompleteAdapter mOriginPlaceAutocompleteAdapter;
 
@@ -97,6 +100,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mDestination = findViewById(R.id.input_destination);
         mGpsButton = findViewById(R.id.ic_gps);
         mSearchButton = findViewById(R.id.ic_magnify);
+        mShowBikeLanesButton = findViewById(R.id.ic_bikelanes);
 
         mGeoDataClient = Places.getGeoDataClient(this);
         mPlaceDetectionClient = Places.getPlaceDetectionClient(this);
@@ -124,6 +128,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         initDestinationBar();
         initGpsButton();
         initSearchButton();
+        initBikeLaneButton();
 
         if (mLocationPermissionGranted) {
             getDeviceLocation();
@@ -232,7 +237,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      */
     private void initGpsButton() {
         mGpsButton.setOnClickListener(v -> getDeviceLocation());
-        mGpsButton.setOnLongClickListener(v-> {
+        mGpsButton.setOnLongClickListener(v -> {
             getDeviceLocation();
             origin = currentLocationCoordinates;
             mOrigin.setText("My Location");
@@ -245,8 +250,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             if (origin != null && destination != null) {
                 findDirection();
             }
-    });
-}
+        });
+    }
+
+    private void initBikeLaneButton() {
+        final boolean[] clicked = {false};
+        mShowBikeLanesButton.setOnClickListener(v -> {
+            if (clicked[0]) {
+                mMap.clear();
+                clicked[0] = false;
+            } else {
+                showAllLanes();
+                clicked[0] = true;
+            }
+        });
+    }
 
     /**
      * If the user granted permission to his location, then it zooms in on his location.
@@ -276,6 +294,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         } catch (SecurityException e) {
             Log.d(TAG, "getDeviceLocation: " + e.getMessage());
         }
+
     }
 
     /**
@@ -302,8 +321,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.clear();
         new RouteBuilder(origin, destination, mMap);
         mMap.addMarker(new MarkerOptions()
-                    .position(origin)
-                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+                .position(origin)
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
         moveCamera(destination, DEFAULT_ZOOM, true);
     }
 
@@ -410,15 +429,28 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     void dummydatabase() {
         DatabaseService db = new DatabaseService(this);
-//        db.addToDatabase(new LatLng(47.170095, 27.576226), new LatLng(47.190355, 27.559079));
-//        db.addToDatabase(new LatLng(47.173751, 27.539233), new LatLng(47.173378, 27.560231));
-//        db.addToDatabase(new LatLng(47.169090, 27.577570), new LatLng(47.162010, 27.594817));
+//        db.addToDatabase(new LatLng(47.170095, 27.576226), new LatLng(47.190355, 27.559079), TravelMode.DRIVING);
+//        db.addToDatabase(new LatLng(47.173751, 27.539233), new LatLng(47.173378, 27.560231), TravelMode.DRIVING);
+//        db.addToDatabase(new LatLng(47.169090, 27.577570), new LatLng(47.162010, 27.594817), TravelMode.DRIVING);
+//        db.addToDatabase(new LatLng(47.158793, 27.601097), new LatLng(47.156457, 27.603424), TravelMode.DRIVING);
+//        db.addToDatabase(new LatLng(47.150937, 27.586846), new LatLng(47.134892, 27.573074), TravelMode.DRIVING);
+//        db.addToDatabase(new LatLng(47.154486, 27.604114), new LatLng(47.152010, 27.588313), TravelMode.WALKING);
+//        db.addToDatabase(new LatLng(47.165670, 27.579843), new LatLng(47.158991, 27.585694), TravelMode.WALKING);
+//        db.addToDatabase(new LatLng(), new LatLng());
+//        db.addToDatabase(new LatLng(), new LatLng());
+//        db.addToDatabase(new LatLng(), new LatLng());
+//        db.addToDatabase(new LatLng(), new LatLng());
+//        db.addToDatabase(new LatLng(), new LatLng());
+//        db.addToDatabase(new LatLng(), new LatLng());
+//        db.addToDatabase(new LatLng(), new LatLng());
+//        db.addToDatabase(new LatLng(), new LatLng());
 //        db.addToDatabase(new LatLng(), new LatLng());
 //        db.addToDatabase(new LatLng(), new LatLng());
 //        db.addToDatabase(new LatLng(), new LatLng());
 //        db.addToDatabase(new LatLng(), new LatLng());
 
     }
+
 
     public void notifyUser(String message) {
         Toast.makeText(MapsActivity.this, message, Toast.LENGTH_SHORT).show();
@@ -435,4 +467,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
 
+    private void showAllLanes() {
+        for (Route route : bikeRoutes) {
+            PolylineOptions bikePoly = new PolylineOptions()
+                    .geodesic(true)
+                    .addAll(route.getPointList())
+                    .color(Color.rgb(167,121,233))
+                    .width(10);
+            mMap.addPolyline(bikePoly);
+        }
+    }
 }
