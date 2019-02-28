@@ -1,5 +1,6 @@
 package com.example.monica.b_cycle.services;
 
+import android.location.Location;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -25,6 +26,7 @@ public class DatabaseService implements RouteFinderListener {
     private DatabaseReference mRootRef;
     private RouteDaoMapper mapper = new RouteDaoMapper();
     private MapsActivity mMap;
+    private final int MIN_DISTANCE_IN_METERS = 100;
 
     public DatabaseService(MapsActivity mMap) {
         this.mRootRef = FirebaseDatabase.getInstance().getReference();
@@ -83,15 +85,36 @@ public class DatabaseService implements RouteFinderListener {
         });
     }
 
+
+    private LatLng getNewPointBetweenAandB(LatLng pointA, LatLng pointB, float distance) {
+        LatLng vector = new LatLng((float)(pointB.latitude - pointA.latitude)/distance, (float)(pointB.longitude - pointA.longitude)/distance);
+        LatLng pointC = new LatLng(pointA.latitude + vector.latitude * MIN_DISTANCE_IN_METERS, pointA.longitude + vector.longitude * MIN_DISTANCE_IN_METERS);
+        return pointC;
+    }
+
+    private void expandPath(Route route) {
+        List<LatLng> pointList = route.getPointList();
+        for (int i = 0; i < pointList.size() - 1; i++) {
+            float distance[] = new float[1];
+            LatLng pointA = pointList.get(i);
+            LatLng pointB = pointList.get(i + 1);
+            Location.distanceBetween(pointA.latitude, pointA.longitude,
+                    pointB.latitude, pointB.longitude, distance);
+            if (distance[0] > MIN_DISTANCE_IN_METERS) {
+                pointList.add(i + 1, getNewPointBetweenAandB(pointA, pointB, distance[0]));
+            }
+        }
+    }
+
     public void addToDatabase(LatLng origin, LatLng destination, TravelMode travelMode) {
         new RouteFinder(origin, destination, travelMode, this).findRoute();
     }
 
 
-
     @Override
     public void onRouteFinderSuccess(List<Route> routes) {
         DatabaseReference newRouteRef = mRootRef.push();
+        expandPath(routes.get(0));
         newRouteRef.setValue(mapper.map(routes.get(0)));
     }
 
