@@ -34,7 +34,6 @@ public class RouteBuilder implements RouteFinderListener {
 
     public RouteBuilder(LatLng origin, LatLng destination, GoogleMap mMap) {
         new RouteFinder(origin, destination, TravelMode.DRIVING, this).findRoute();
-        new RouteFinder(origin, destination, TravelMode.WALKING, this).findRoute();
         this.mMap = mMap;
         allRoutes = new ArrayList<>();
         allBikePoints = new ArrayList<>();
@@ -42,54 +41,6 @@ public class RouteBuilder implements RouteFinderListener {
             allBikePoints.addAll(route.getPointList());
         });
     }
-
-    private void drawWalkAndBikeRoute(List<Route> routes) {
-        List<LatLng> allBikePoints = new ArrayList<>();
-        MapsActivity.bikeRoutes.forEach(route -> {
-            allBikePoints.addAll(route.getPointList());
-        });
-        Route route = routes.get(0);
-
-        PolylineOptions bikePoly = getNewBikePoly();
-        PolylineOptions roadPoly = getNewRoadPoly();
-        List<LatLng> points = route.getPointList();
-
-        PolylineOptions polylineOptions = new PolylineOptions()
-                .addAll(route.getPointList());
-
-        boolean lastPointOnBikeTrail = false;
-        for (LatLng point : points) {
-            boolean pointOnBikeTrail = false;
-
-            for (LatLng bikePoint : allBikePoints) {
-                if (PolyUtil.containsLocation(bikePoint, points, true)) {
-                    pointOnBikeTrail = true;
-                    break;
-                }
-            }
-            if (!pointOnBikeTrail) {
-                roadPoly.add((point));
-
-                if (lastPointOnBikeTrail) {
-                    bikePoly.add(point);
-                }
-                mMap.addPolyline(bikePoly);
-                bikePoly = getNewBikePoly();
-                lastPointOnBikeTrail = false;
-            } else {
-                bikePoly.add(point);
-                if (!lastPointOnBikeTrail) {
-                    roadPoly.add(point);
-                }
-                mMap.addPolyline(roadPoly);
-                roadPoly = getNewRoadPoly();
-                lastPointOnBikeTrail = true;
-            }
-        }
-        mMap.addPolyline(roadPoly);
-        mMap.addPolyline(bikePoly);
-    }
-
 
     /**
      * Draws the combined route formed of Road + Bicycle lanes
@@ -175,16 +126,6 @@ public class RouteBuilder implements RouteFinderListener {
     }
 
     /**
-     * @return New custom Polyline signifying Sidewalks
-     */
-    private PolylineOptions getNewWalkPoly() {
-        return new PolylineOptions()
-                .geodesic(true)
-                .color(Color.rgb(0, 128, 0))
-                .pattern(polylinePattern).width(10);
-    }
-
-    /**
      * Returns the routes with Travel Mode set on DRIVING
      *
      * @return
@@ -194,18 +135,6 @@ public class RouteBuilder implements RouteFinderListener {
                 .filter(route -> route.getTravelMode() == TravelMode.DRIVING)
                 .collect(Collectors.toList());
     }
-
-    /**
-     * Returns the routes with Travel Mode set on WALKING
-     *
-     * @return
-     */
-    public List<Route> getWalkingRoutes() {
-        return allRoutes.stream()
-                .filter(route -> route.getTravelMode() == TravelMode.WALKING)
-                .collect(Collectors.toList());
-    }
-
 
     /**
      * Function to determine whether two points are within the minimum distance permitted
