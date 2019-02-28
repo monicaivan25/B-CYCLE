@@ -1,11 +1,11 @@
 package com.example.monica.b_cycle.services;
 
 import android.graphics.Color;
+import android.location.Location;
 
 import com.example.monica.b_cycle.MapsActivity;
 import com.example.monica.b_cycle.model.Route;
 import com.example.monica.b_cycle.model.TravelMode;
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.Dot;
 import com.google.android.gms.maps.model.Gap;
@@ -21,14 +21,15 @@ import java.util.stream.Collectors;
 
 public class RouteBuilder implements RouteFinderListener {
 
-    private final double TOLERANCE = 0.01;
-    private final double MIN_ERROR = 0.01;
+    private final double POINT_TO_LINE_TOLERANCE_IN_METERS = 20;
+    private final int POINT_TO_POINT_TOLERANCE_IN_METERS = 100;
 
-    private final double MAX_COMFORTABLE_DISTANCE = 0.001;
+
     private List<PatternItem> polylinePattern = Arrays.asList(new Dot(), new Gap(20));
     private GoogleMap mMap;
     private ElevationFinder elevationFinder;
     private List<Route> allRoutes;
+    private List<LatLng> allBikePoints;
     private PolylineOptions bikeRoute;
 
     public RouteBuilder(LatLng origin, LatLng destination, GoogleMap mMap) {
@@ -36,6 +37,10 @@ public class RouteBuilder implements RouteFinderListener {
         new RouteFinder(origin, destination, TravelMode.WALKING, this).findRoute();
         this.mMap = mMap;
         allRoutes = new ArrayList<>();
+        allBikePoints = new ArrayList<>();
+        MapsActivity.bikeRoutes.forEach(route -> {
+            allBikePoints.addAll(route.getPointList());
+        });
     }
 
     private void drawWalkAndBikeRoute(List<Route> routes) {
@@ -93,47 +98,39 @@ public class RouteBuilder implements RouteFinderListener {
      */
     private void drawDriveAndBikeRoute(List<Route> routes) {
 
-        List<LatLng> allBikePoints = new ArrayList<>();
-        MapsActivity.bikeRoutes.forEach(route -> {
-            allBikePoints.addAll(route.getPointList());
-        });
-        Route route = routes.get(0);
+        Route drivingRoute = routes.get(0);
 
         PolylineOptions bikePoly = getNewBikePoly();
         PolylineOptions roadPoly = getNewRoadPoly();
-        List<LatLng> points = route.getPointList();
+        List<LatLng> drivingRoutePointList = drivingRoute.getPointList();
 
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(points.get(0), 15f));
+        LatLng lastPoint = drivingRoutePointList.get(0);
         boolean lastPointOnBikeTrail = false;
-        LatLng lastPoint = points.get(0);
-        for (LatLng point : points) {
-//            mMap.addMarker(new MarkerOptions().position(lastPoint).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW)));
+        for (LatLng drivingPoint : drivingRoutePointList) {
 
             boolean pointOnBikeTrail = false;
             for (LatLng bikePoint : allBikePoints) {
-//                mMap.addMarker(new MarkerOptions().position(bikePoint));
 
-                if (arePointsClose(bikePoint, lastPoint, point)) {
+                if (arePointsClose(drivingPoint, bikePoint) && PolyUtil.distanceToLine(bikePoint, lastPoint, drivingPoint) < POINT_TO_LINE_TOLERANCE_IN_METERS) {
                     pointOnBikeTrail = true;
-//                    mMap.addMarker(new MarkerOptions().position(bikePoint));
                     break;
                 }
             }
-            lastPoint = point;
+            lastPoint = drivingPoint;
 
             if (!pointOnBikeTrail) {
-                roadPoly.add((point));
+                roadPoly.add((drivingPoint));
 
                 if (lastPointOnBikeTrail) {
-                    bikePoly.add(point);
+                    bikePoly.add(drivingPoint);
                 }
                 mMap.addPolyline(bikePoly);
                 bikePoly = getNewBikePoly();
                 lastPointOnBikeTrail = false;
             } else {
-                bikePoly.add(point);
+                bikePoly.add(drivingPoint);
                 if (!lastPointOnBikeTrail) {
-                    roadPoly.add(point);
+                    roadPoly.add(drivingPoint);
                 }
                 mMap.addPolyline(roadPoly);
                 roadPoly = getNewRoadPoly();
@@ -210,6 +207,20 @@ public class RouteBuilder implements RouteFinderListener {
     }
 
 
+    /**
+     * Function to determine whether two points are within the minimum distance permitted
+     *
+     * @param pointA
+     * @param pointB
+     * @return true or false as appropriate
+     */
+
+    private boolean arePointsClose(LatLng pointA, LatLng pointB) {
+        float distance[] = new float[1];
+        Location.distanceBetween(pointA.latitude, pointA.longitude, pointB.latitude, pointB.longitude, distance);
+        return distance[0] <= POINT_TO_POINT_TOLERANCE_IN_METERS;
+    }
+
     public List<PatternItem> getPolylinePattern() {
         return polylinePattern;
     }
@@ -248,72 +259,6 @@ public class RouteBuilder implements RouteFinderListener {
 
     public void setBikeRoute(PolylineOptions bikeRoute) {
         this.bikeRoute = bikeRoute;
-    }
-
-
-    /**
-     * Function to determine whether a point is close enough to the line created
-     * by two other points.
-     *
-     * @param pointX
-     * @param pointB
-     * @param pointA
-     * @return true or false as appropriate
-     */
-    public boolean arePointsClose(LatLng pointX, LatLng pointB, LatLng pointA) {
-        if (pointA.latitude == pointB.latitude) {
-            if ((pointX.latitude - pointA.latitude <= TOLERANCE) && longitudeBetween(pointX, pointA, pointB)) {
-                return true;
-            }
-        } else if (pointA.longitude == pointB.longitude) {
-            if ((pointX.longitude - pointA.longitude <= TOLERANCE) && latitudeBetween(pointX, pointA, pointB)) {
-                return true;
-            }
-        } else if (doesPointBelongOnLine(pointX, pointA, pointB, 0.05) && !tooFar(pointX, pointA, pointB)) {
-            return true;
-        }
-        return false;
-    }
-
-    boolean doesPointBelongOnLine(LatLng point, LatLng a, LatLng b, Double tolerance) {
-
-        double x = Math.abs((point.longitude - b.longitude) / (a.longitude - b.longitude) -
-                (point.latitude - b.latitude) / (a.latitude - b.latitude));
-        return x <= tolerance;
-    }
-
-    boolean longitudeBetween(LatLng x, LatLng a, LatLng b) {
-        return (((x.longitude < a.longitude) && (x.longitude > b.longitude))
-                || ((x.longitude > a.longitude) && (x.longitude < b.longitude))
-                || Math.abs(a.longitude - x.longitude) <= TOLERANCE
-                || Math.abs(b.longitude - x.longitude) <= TOLERANCE);
-    }
-
-    boolean latitudeBetween(LatLng x, LatLng a, LatLng b) {
-        return (((x.latitude < a.latitude) && (x.latitude > b.latitude))
-                || ((x.latitude > a.latitude) && (x.latitude < b.latitude))
-                || Math.abs(a.latitude - x.latitude) <= TOLERANCE
-                || Math.abs(b.latitude - x.latitude) <= TOLERANCE);
-    }
-
-    double distanceFromPointToLine(LatLng x, LatLng a, LatLng b) {
-        return Math.abs((b.longitude - a.longitude) * x.longitude
-                - (b.latitude - a.latitude) * x.latitude
-                + b.latitude * a.longitude - b.longitude * a.latitude)
-                / Math.sqrt((b.longitude - a.longitude) * (b.longitude - a.longitude)
-                + (b.latitude - a.latitude) * (b.latitude - a.latitude));
-    }
-
-    boolean tooFar(LatLng x, LatLng a, LatLng b) {
-        if (Math.min(
-                Math.abs(x.longitude - a.longitude),
-                Math.abs(x.longitude - b.longitude)) > TOLERANCE)
-            return true;
-        if (Math.min(
-                Math.abs(x.latitude - a.latitude),
-                Math.abs(x.latitude - b.latitude)) > TOLERANCE)
-            return true;
-        return false;
     }
 
 }
