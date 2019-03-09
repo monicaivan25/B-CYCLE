@@ -2,8 +2,10 @@ package com.example.monica.b_cycle.services;
 
 import android.graphics.Color;
 import android.location.Location;
+import android.util.Log;
 
 import com.example.monica.b_cycle.MapsActivity;
+import com.example.monica.b_cycle.model.Elevation;
 import com.example.monica.b_cycle.model.Route;
 import com.example.monica.b_cycle.model.TravelMode;
 import com.google.android.gms.maps.GoogleMap;
@@ -19,15 +21,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class RouteBuilder implements RouteFinderListener {
+public class RouteBuilder implements RouteFinderListener, ElevationFinderListener {
 
     private final double POINT_TO_LINE_TOLERANCE_IN_METERS = 20;
     private final int POINT_TO_POINT_TOLERANCE_IN_METERS = 100;
 
-
     private List<PatternItem> polylinePattern = Arrays.asList(new Dot(), new Gap(20));
     private GoogleMap mMap;
-    private ElevationFinder elevationFinder;
     private List<Route> allRoutes;
     private List<LatLng> allBikePoints;
     private PolylineOptions bikeRoute;
@@ -93,19 +93,6 @@ public class RouteBuilder implements RouteFinderListener {
     }
 
     /**
-     * Method overrun from RouteFinderListener.
-     * Adds all routes to class variable allRoutes.
-     * Calls drawing method appropriately.
-     *
-     * @param routes
-     */
-    @Override
-    public void onRouteFinderSuccess(List<Route> routes) {
-        allRoutes.add(routes.get(0));
-        drawDriveAndBikeRoute(getDrivingRoutes());
-    }
-
-    /**
      * @return New custom Polyline signifying Road areas
      */
     private PolylineOptions getNewRoadPoly() {
@@ -150,44 +137,22 @@ public class RouteBuilder implements RouteFinderListener {
         return distance[0] <= POINT_TO_POINT_TOLERANCE_IN_METERS;
     }
 
-    public List<PatternItem> getPolylinePattern() {
-        return polylinePattern;
+    /**
+     * Method overrun from RouteFinderListener.
+     * Adds all routes to class variable allRoutes.
+     * Calls drawing method appropriately.
+     *
+     * @param routes
+     */
+    @Override
+    public void onRouteFinderSuccess(List<Route> routes) {
+        new ElevationFinder(routes.get(0), this).findRoute();
+        allRoutes.add(routes.get(0));
+        drawDriveAndBikeRoute(getDrivingRoutes());
     }
 
-    public void setPolylinePattern(List<PatternItem> polylinePattern) {
-        this.polylinePattern = polylinePattern;
+    @Override
+    public void onElevationFinderSuccess(List<Elevation> elevations) {
+        Log.d("YOOO", elevations.toString());
     }
-
-    public GoogleMap getmMap() {
-        return mMap;
-    }
-
-    public void setmMap(GoogleMap mMap) {
-        this.mMap = mMap;
-    }
-
-    public ElevationFinder getElevationFinder() {
-        return elevationFinder;
-    }
-
-    public void setElevationFinder(ElevationFinder elevationFinder) {
-        this.elevationFinder = elevationFinder;
-    }
-
-    public List<Route> getAllRoutes() {
-        return allRoutes;
-    }
-
-    public void setAllRoutes(List<Route> allRoutes) {
-        this.allRoutes = allRoutes;
-    }
-
-    public PolylineOptions getBikeRoute() {
-        return bikeRoute;
-    }
-
-    public void setBikeRoute(PolylineOptions bikeRoute) {
-        this.bikeRoute = bikeRoute;
-    }
-
 }

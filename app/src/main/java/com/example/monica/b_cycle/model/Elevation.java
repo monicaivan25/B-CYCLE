@@ -4,27 +4,38 @@ import com.google.android.gms.maps.model.LatLng;
 
 public class Elevation {
 
-    private LatLng point;
-    private Integer value;
+    private LatLng location;
+    private Double elevation;
 
-    public Elevation(LatLng point, Integer value) {
-        this.point = point;
-        this.value = value;
+    public Elevation() {
     }
 
-    public LatLng getPoint() {
-        return point;
+    public Elevation(LatLng location, Double elevation) {
+        this.location = location;
+        this.elevation = elevation;
     }
 
-    public void setPoint(LatLng point) {
-        this.point = point;
+    public LatLng getLocation() {
+        return location;
     }
 
-    public Integer getValue() {
-        return value;
+    public void setLocation(LatLng location) {
+        this.location = location;
     }
 
-    public void setValue(Integer value) {
-        this.value = value;
+    public Double getElevation() {
+        return elevation;
+    }
+
+    public void setElevation(Double elevation) {
+        this.elevation = elevation;
+    }
+
+    @Override
+    public String toString() {
+        return "Elevation{" +
+                "location=" + location +
+                ", elevation=" + elevation +
+                '}';
     }
 }
