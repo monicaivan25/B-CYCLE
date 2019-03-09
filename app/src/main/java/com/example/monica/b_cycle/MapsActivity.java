@@ -24,8 +24,8 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.example.monica.b_cycle.exceptions.LocationNotFoundException;
+import com.example.monica.b_cycle.model.Elevation;
 import com.example.monica.b_cycle.model.Route;
-import com.example.monica.b_cycle.model.TravelMode;
 import com.example.monica.b_cycle.services.DatabaseService;
 import com.example.monica.b_cycle.services.PlaceAutocompleteAdapter;
 import com.example.monica.b_cycle.services.RouteBuilder;
@@ -54,19 +54,21 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PatternItem;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.Task;
+import com.jjoe64.graphview.GraphView;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener {
 
     public static List<Route> bikeRoutes = new ArrayList<>();
 
     private final String TAG = "MapsActivity";
-    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1234;
-    private static final float DEFAULT_ZOOM = 15f;
-    private static final LatLngBounds LAT_LNG_BOUNDS = new LatLngBounds(new LatLng(-40, -168), new LatLng(71, 136));
+    private final int LOCATION_PERMISSION_REQUEST_CODE = 1234;
+    private final float DEFAULT_ZOOM = 15f;
+    private final LatLngBounds LAT_LNG_BOUNDS = new LatLngBounds(new LatLng(-40, -168), new LatLng(71, 136));
     private GoogleMap mMap;
     private Boolean mLocationPermissionGranted = false;
     private AutoCompleteTextView mOrigin;
@@ -76,7 +78,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private ImageView mShowBikeLanesButton;
     private PlaceAutocompleteAdapter mDestinationAutocompleteAdapter;
     private PlaceAutocompleteAdapter mOriginPlaceAutocompleteAdapter;
-
+    private GraphView mGraph;
     protected GeoDataClient mGeoDataClient;
     protected PlaceDetectionClient mPlaceDetectionClient;
     private GoogleApiClient mGoogleApiClient;
@@ -101,6 +103,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mGpsButton = findViewById(R.id.ic_gps);
         mSearchButton = findViewById(R.id.ic_magnify);
         mShowBikeLanesButton = findViewById(R.id.ic_bikelanes);
+        mGraph = (GraphView) findViewById(R.id.graph);
+
 
         mGeoDataClient = Places.getGeoDataClient(this);
         mPlaceDetectionClient = Places.getPlaceDetectionClient(this);
@@ -139,7 +143,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
 
     }
-
 
     /**
      * Applies style found in res/raw/style_json.json to map and disables standard GPS button.
@@ -312,6 +315,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
+
     /**
      * Creates a new RouteBuilder to call upon the Google Directions request URL
      * to query about different routes from origin to destination.
@@ -319,7 +323,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      */
     private void findDirection() {
         mMap.clear();
-        new RouteBuilder(origin, destination, mMap);
+        new RouteBuilder(origin, destination, mMap, mGraph);
         mMap.addMarker(new MarkerOptions()
                 .position(origin)
                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
@@ -472,7 +476,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             PolylineOptions bikePoly = new PolylineOptions()
                     .geodesic(true)
                     .addAll(route.getPointList())
-                    .color(Color.rgb(167,121,233))
+                    .color(Color.rgb(167, 121, 233))
                     .width(10);
             mMap.addPolyline(bikePoly);
         }

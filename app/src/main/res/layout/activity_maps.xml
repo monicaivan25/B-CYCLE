@@ -123,10 +123,16 @@
                 android:src="@drawable/ic_bike" />
         </RelativeLayout>
     </RelativeLayout>
-    <TextView
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center|top"
-        android:text="The Awesome Sliding Up Panel"
-        android:textSize="16sp" />
+        android:layout_height="300dp"
+        android:background="#000">
+        <com.jjoe64.graphview.GraphView
+            android:layout_width="match_parent"
+            android:layout_height="150dip"
+            android:id="@+id/graph"
+            android:layout_alignParentBottom="true"
+
+            />
+    </RelativeLayout>
 </com.sothree.slidinguppanel.SlidingUpPanelLayout>

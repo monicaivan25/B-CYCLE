@@ -2,7 +2,6 @@ package com.example.monica.b_cycle.services;
 
 import android.graphics.Color;
 import android.location.Location;
-import android.util.Log;
 
 import com.example.monica.b_cycle.MapsActivity;
 import com.example.monica.b_cycle.model.Elevation;
@@ -15,6 +14,9 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.PatternItem;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.maps.android.PolyUtil;
+import com.jjoe64.graphview.GraphView;
+import com.jjoe64.graphview.series.DataPoint;
+import com.jjoe64.graphview.series.LineGraphSeries;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,13 +30,15 @@ public class RouteBuilder implements RouteFinderListener, ElevationFinderListene
 
     private List<PatternItem> polylinePattern = Arrays.asList(new Dot(), new Gap(20));
     private GoogleMap mMap;
+    private GraphView mGraph;
     private List<Route> allRoutes;
     private List<LatLng> allBikePoints;
     private PolylineOptions bikeRoute;
 
-    public RouteBuilder(LatLng origin, LatLng destination, GoogleMap mMap) {
+    public RouteBuilder(LatLng origin, LatLng destination, GoogleMap mMap, GraphView mGraph) {
         new RouteFinder(origin, destination, TravelMode.DRIVING, this).findRoute();
         this.mMap = mMap;
+        this.mGraph = mGraph;
         allRoutes = new ArrayList<>();
         allBikePoints = new ArrayList<>();
         MapsActivity.bikeRoutes.forEach(route -> {
@@ -137,6 +141,19 @@ public class RouteBuilder implements RouteFinderListener, ElevationFinderListene
         return distance[0] <= POINT_TO_POINT_TOLERANCE_IN_METERS;
     }
 
+    private void drawElevations(List<Elevation> elevations) {
+        DataPoint[] dataPoints = new DataPoint[elevations.size()];
+        for (int i=0; i<elevations.size(); i++){
+            dataPoints[i] = new DataPoint(i, elevations.get(i).getElevation().intValue());
+        }
+        LineGraphSeries<DataPoint> series = new LineGraphSeries<>(dataPoints);
+        series.setDrawBackground(true);
+        series.setAnimated(true);
+        series.setDrawDataPoints(true);
+        series.setThickness(8);
+        mGraph.addSeries(series);
+    }
+
     /**
      * Method overrun from RouteFinderListener.
      * Adds all routes to class variable allRoutes.
@@ -153,6 +170,6 @@ public class RouteBuilder implements RouteFinderListener, ElevationFinderListene
 
     @Override
     public void onElevationFinderSuccess(List<Elevation> elevations) {
-        Log.d("YOOO", elevations.toString());
+        drawElevations(elevations);
     }
 }
