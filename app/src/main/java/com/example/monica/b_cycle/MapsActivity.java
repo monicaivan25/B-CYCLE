@@ -56,6 +56,7 @@ import com.google.android.gms.maps.model.PatternItem;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.Task;
 import com.jjoe64.graphview.GraphView;
+import com.jjoe64.graphview.GridLabelRenderer;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -137,6 +138,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         initGpsButton();
         initSearchButton();
         initBikeLaneButton();
+        initGraph();
 
         if (mLocationPermissionGranted) {
             getDeviceLocation();
@@ -273,6 +275,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         });
     }
 
+    private void initGraph(){
+        mGraph.getViewport().setXAxisBoundsManual(true);
+        mGraph.getViewport().setMinX(0);
+        mGraph.getViewport().setMaxX(15);
+        mGraph.getGridLabelRenderer().setGridStyle(GridLabelRenderer.GridStyle.HORIZONTAL);
+        mGraph.getGridLabelRenderer().setGridColor(Color.rgb(115, 143, 167));
+        mGraph.getGridLabelRenderer().setVerticalLabelsColor(Color.rgb(115, 143, 167));
+        mGraph.getGridLabelRenderer().setHorizontalLabelsVisible(false);// remove horizontal x labels and line
+//        mGraph.getGridLabelRenderer().setVerticalLabelsVisible(false);
+    }
     /**
      * If the user granted permission to his location, then it zooms in on his location.
      * If task was unsuccessful or permission was not granted, it notifies the user through a Toast.

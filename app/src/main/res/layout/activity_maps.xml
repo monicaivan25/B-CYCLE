@@ -127,7 +127,7 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="190dp"
-        android:background="@color/colorPrimary">
+        android:background="@color/colorPrimaryDarker">
 
         <RelativeLayout
             android:layout_width="match_parent"
@@ -154,7 +154,7 @@
                 android:layout_weight="1"
                 android:text="0km"
                 android:textSize="30sp"
-                android:layout_marginStart="10dp"
+                android:layout_marginStart="20dp"
                 android:textColor="@color/colorAccent"
                 tools:ignore="HardcodedText">
             </TextView>
@@ -165,7 +165,7 @@
                 android:layout_weight="1"
                 android:text="0min"
                 android:textSize="30sp"
-                android:layout_marginEnd="10dp"
+                android:layout_marginEnd="20dp"
                 android:textColor="@color/colorAccent"
                 tools:ignore="HardcodedText">
             </TextView>
@@ -177,6 +177,8 @@
             android:layout_height="100dp"
             android:layout_alignParentBottom="true"
             android:layout_marginBottom="10dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
             />
     </RelativeLayout>
 </com.sothree.slidinguppanel.SlidingUpPanelLayout>

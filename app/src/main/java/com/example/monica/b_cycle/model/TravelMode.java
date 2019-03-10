@@ -4,9 +4,9 @@ import android.graphics.Color;
 
 public enum TravelMode {
 
-    BICYCLING(Color.GREEN, "bicycling", 13),
-    DRIVING(Color.BLUE, "driving", 20),
-    WALKING(Color.RED, "walking", 10);
+    BICYCLING(Color.GREEN, "bicycling", 10),
+    DRIVING(Color.BLUE, "driving", 15),
+    WALKING(Color.RED, "walking", 7);
 
     private final int color;
     private final String name;

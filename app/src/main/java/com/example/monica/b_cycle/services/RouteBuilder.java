@@ -19,6 +19,7 @@ import com.google.android.gms.maps.model.PatternItem;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.maps.android.PolyUtil;
 import com.jjoe64.graphview.GraphView;
+import com.jjoe64.graphview.GridLabelRenderer;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.LineGraphSeries;
 
@@ -102,7 +103,7 @@ public class RouteBuilder implements RouteFinderListener, ElevationFinderListene
             }
         }
         setDistance(drivingRoute);
-        setDuration(drivingRoute, bikingDistanceInKm, drivingRoute.getDistance().getValue() / 1000.0);
+        setDuration(drivingRoute, bikingDistanceInKm, (drivingRoute.getDistance().getValue() / 1000.0)- bikingDistanceInKm);
 
         mMap.addPolyline(roadPoly);
         mMap.addPolyline(bikePoly);
@@ -169,6 +170,7 @@ public class RouteBuilder implements RouteFinderListener, ElevationFinderListene
             }
         } else duration = String.valueOf(durationInHours)+ "h";
         route.setDuration(new Duration(duration, (int) durationInHours));
+        mDuration.setText(route.getDuration().getText());
     }
 
     private void drawElevations(List<Elevation> elevations) {
@@ -181,9 +183,7 @@ public class RouteBuilder implements RouteFinderListener, ElevationFinderListene
         series.setDrawBackground(true);
         series.setDrawDataPoints(true);
         series.setThickness(8);
-        mGraph.getViewport().setXAxisBoundsManual(true);
-        mGraph.getViewport().setMinX(0); // set the min value of the viewport of x axis<br />
-        mGraph.getViewport().setMaxX(15);
+
         mGraph.addSeries(series);
     }
 
@@ -199,14 +199,10 @@ public class RouteBuilder implements RouteFinderListener, ElevationFinderListene
         new ElevationFinder(routes.get(0), this).findRoute();
         allRoutes.add(routes.get(0));
         drawDriveAndBikeRoute(getDrivingRoutes());
-        mDuration.setText(routes.get(0).getDuration().getText());
-
     }
 
     @Override
     public void onElevationFinderSuccess(List<Elevation> elevations) {
-
         drawElevations(elevations);
-
     }
 }
