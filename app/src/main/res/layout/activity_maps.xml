@@ -1,117 +1,184 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.sothree.slidinguppanel.SlidingUpPanelLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:sothree="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
-
-    <fragment xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:map="http://schemas.android.com/apk/res-auto"
-        xmlns:tools="http://schemas.android.com/tools"
-        android:id="@+id/map"
-        android:name="com.google.android.gms.maps.SupportMapFragment"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true"
-        tools:context=".MapsActivity" />
+    android:layout_height="match_parent"
+    android:gravity="bottom"
+    sothree:umanoPanelHeight="20dp"
+    sothree:umanoShadowHeight="4dp">
 
     <RelativeLayout
-        android:id="@+id/relLayout"
         android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:layout_marginLeft="10dp"
-        android:layout_marginTop="10dp"
-        android:layout_marginRight="10dp"
-        android:background="@color/colorPrimaryDark"
-        android:elevation="2dp">
+        android:layout_height="match_parent">
 
-        <AutoCompleteTextView
-            android:id="@+id/input_origin"
+        <fragment xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:map="http://schemas.android.com/apk/res-auto"
+            xmlns:tools="http://schemas.android.com/tools"
+            android:id="@+id/map"
+            android:name="com.google.android.gms.maps.SupportMapFragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
+            tools:context=".MapsActivity" />
+
+        <RelativeLayout
+            android:id="@+id/relLayout"
             android:layout_width="match_parent"
             android:layout_height="40dp"
-            android:layout_alignParentTop="true"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginRight="10dp"
+            android:background="@color/colorPrimaryDark"
+            android:elevation="2dp">
+
+            <AutoCompleteTextView
+                android:id="@+id/input_origin"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentBottom="true"
+                android:layout_marginStart="20dp"
+                android:layout_marginTop="0dp"
+                android:layout_marginBottom="0dp"
+                android:background="@null"
+                android:hint="My Location"
+                android:imeOptions="actionDone"
+                android:singleLine="true"
+                android:textColor="#FFF"
+                android:textColorHint="@color/textColorHint"
+                android:textSize="15sp" />
+
+            <ImageView
+                android:id="@+id/ic_gps"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerHorizontal="true"
+                android:layout_centerVertical="true"
+                android:layout_margin="10dp"
+                android:imeOptions="actionGo"
+                android:src="@drawable/ic_gps" />
+
+        </RelativeLayout>
+
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="55dp"
+            android:layout_marginRight="10dp"
+            android:background="@color/colorPrimaryDark"
+            android:elevation="2dp">
+
+            <AutoCompleteTextView
+                android:id="@+id/input_destination"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:layout_alignParentTop="true"
+                android:layout_marginStart="20dp"
+                android:background="@null"
+                android:hint="Enter Destination"
+                android:imeOptions="actionDone"
+                android:singleLine="true"
+                android:textColor="#FFF"
+                android:textColorHint="@color/textColorHint"
+                android:textSize="15sp" />
+
+            <ImageView
+                android:id="@+id/ic_magnify"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                android:imeOptions="actionSearch"
+                android:src="@drawable/ic_search" />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_alignParentEnd="true"
             android:layout_alignParentBottom="true"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="0dp"
-            android:layout_marginBottom="0dp"
-            android:background="@null"
-            android:hint="My Location"
-            android:textColorHint="@color/textColorHint"
-            android:imeOptions="actionDone"
-            android:singleLine="true"
-            android:textColor="#FFF"
-            android:textSize="15sp" />
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:layout_marginBottom="10dp"
+            android:background="@color/colorPrimaryDark"
+            android:elevation="2dp">
 
-        <ImageView
-            android:id="@+id/ic_gps"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:layout_centerHorizontal="true"
-            android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
-            android:layout_margin="10dp"
-            android:imeOptions="actionGo"
-            android:src="@drawable/ic_gps" />
-
+            <ImageView
+                android:id="@+id/ic_bikelanes"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                android:imeOptions="actionSearch"
+                android:src="@drawable/ic_bike" />
+        </RelativeLayout>
     </RelativeLayout>
-
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:layout_marginLeft="10dp"
-        android:layout_marginTop="55dp"
-        android:layout_marginRight="10dp"
-        android:background="@color/colorPrimaryDark"
-        android:elevation="2dp">
+        android:layout_height="190dp"
+        android:background="@color/colorPrimaryDarker">
 
-        <AutoCompleteTextView
-            android:id="@+id/input_destination"
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="40dp"
+            android:layout_height="20dp"
             android:layout_alignParentTop="true"
-            android:layout_marginStart="20dp"
-            android:background="@null"
-            android:hint="Enter Destination"
-            android:textColorHint="@color/textColorHint"
-            android:imeOptions="actionDone"
-            android:singleLine="true"
-            android:textColor="#FFF"
-            android:textSize="15sp"/>
+            android:background="@color/colorPrimaryDark">
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_centerInParent="true"
+                android:src="@drawable/ic_drag_handle_black_24dp"/>
+        </RelativeLayout>
 
-        <ImageView
-            android:id="@+id/ic_magnify"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:layout_centerVertical="true"
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:baselineAligned="false"
+            android:layout_marginTop="30dp">
+            <TextView
+                android:id="@+id/distance"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="0km"
+                android:textSize="30sp"
+                android:layout_marginStart="20dp"
+                android:textColor="@color/colorAccent"
+                tools:ignore="HardcodedText">
+            </TextView>
+            <TextView
+                android:id="@+id/duration"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="0min"
+                android:textSize="30sp"
+                android:layout_marginEnd="20dp"
+                android:textColor="@color/colorAccent"
+                tools:ignore="HardcodedText">
+            </TextView>
+        </LinearLayout>
+
+        <com.jjoe64.graphview.GraphView
+            android:id="@+id/graph"
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="10dp"
             android:layout_marginStart="10dp"
             android:layout_marginEnd="10dp"
-            android:layout_alignParentEnd="true"
-            android:imeOptions="actionSearch"
-            android:src="@drawable/ic_search" />
+            />
     </RelativeLayout>
-
-    <RelativeLayout
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_marginLeft="10dp"
-        android:layout_marginBottom="10dp"
-        android:layout_marginRight="10dp"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentBottom="true"
-        android:background="@color/colorPrimaryDark"
-        android:elevation="2dp">
-
-        <ImageView
-            android:id="@+id/ic_bikelanes"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:layout_centerVertical="true"
-            android:layout_marginStart="10dp"
-            android:layout_marginEnd="10dp"
-            android:layout_alignParentEnd="true"
-            android:imeOptions="actionSearch"
-            android:src="@drawable/ic_bike" />
-    </RelativeLayout>
-</RelativeLayout>
+</com.sothree.slidinguppanel.SlidingUpPanelLayout>

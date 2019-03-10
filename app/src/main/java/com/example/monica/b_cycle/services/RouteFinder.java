@@ -15,7 +15,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-class RouteFinder {
+class RouteFinder implements Finder {
 
     private final String DIRECTIONS_URL = "https://maps.googleapis.com/maps/api/directions/json?";
     private final String GOOGLE_API_KEY = "AIzaSyAzEnSbPCaBHN-Txq0JcsoorIdQxPKTHwU";
@@ -53,11 +53,8 @@ class RouteFinder {
         new JsonDownloader(this).execute(createURL());
     }
 
-    /**
-     * Parses the received data as instances of Route.
-     * @param data the JSON as a String
-     */
-    void parseJson(String data){
+    @Override
+    public void parseJson(String data){
         try {
             JSONObject jsonObject = new JSONObject(data);
             JSONArray jsonArray = jsonObject.getJSONArray("routes");

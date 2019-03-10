@@ -11,10 +11,10 @@ import java.net.URL;
 
 public class JsonDownloader extends AsyncTask<String, Void, String> {
 
-    private RouteFinder routeFinder;
+    private Finder finder;
 
-    public JsonDownloader(RouteFinder routeFinder) {
-        this.routeFinder = routeFinder;
+    public JsonDownloader(Finder finder) {
+        this.finder = finder;
     }
 
     /**
@@ -54,6 +54,6 @@ public class JsonDownloader extends AsyncTask<String, Void, String> {
      */
     @Override
     protected void onPostExecute(String result) {
-        routeFinder.parseJson(result);
+        finder.parseJson(result);
     }
 }
