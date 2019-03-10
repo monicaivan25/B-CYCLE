@@ -81,14 +81,10 @@ public class RouteBuilder implements RouteFinderListener, ElevationFinderListene
                     break;
                 }
             }
-            lastPoint = drivingPoint;
-
             if (!pointOnBikeTrail) {
-                roadPoly.add((drivingPoint));
+                roadPoly.add(lastPoint);
+                roadPoly.add(drivingPoint);
 
-                if (lastPointOnBikeTrail) {
-                    bikePoly.add(drivingPoint);
-                }
                 mMap.addPolyline(bikePoly);
                 bikePoly = getNewBikePoly();
                 lastPointOnBikeTrail = false;
@@ -101,6 +97,8 @@ public class RouteBuilder implements RouteFinderListener, ElevationFinderListene
                 roadPoly = getNewRoadPoly();
                 lastPointOnBikeTrail = true;
             }
+
+            lastPoint = drivingPoint;
         }
         setDistance(drivingRoute);
         setDuration(drivingRoute, bikingDistanceInKm, (drivingRoute.getDistance().getValue() / 1000.0)- bikingDistanceInKm);
