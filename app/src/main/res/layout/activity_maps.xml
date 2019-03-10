@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:gravity="bottom"
-    sothree:umanoPanelHeight="10dp"
+    sothree:umanoPanelHeight="20dp"
     sothree:umanoShadowHeight="4dp">
 
     <RelativeLayout
@@ -123,16 +123,60 @@
                 android:src="@drawable/ic_bike" />
         </RelativeLayout>
     </RelativeLayout>
+
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="300dp"
-        android:background="#000">
-        <com.jjoe64.graphview.GraphView
-            android:layout_width="match_parent"
-            android:layout_height="150dip"
-            android:id="@+id/graph"
-            android:layout_alignParentBottom="true"
+        android:layout_height="190dp"
+        android:background="@color/colorPrimary">
 
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="20dp"
+            android:layout_alignParentTop="true"
+            android:background="@color/colorPrimaryDark">
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_centerInParent="true"
+                android:src="@drawable/ic_drag_handle_black_24dp"/>
+        </RelativeLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:baselineAligned="false"
+            android:layout_marginTop="30dp">
+            <TextView
+                android:id="@+id/distance"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="0km"
+                android:textSize="30sp"
+                android:layout_marginStart="10dp"
+                android:textColor="@color/colorAccent"
+                tools:ignore="HardcodedText">
+            </TextView>
+            <TextView
+                android:id="@+id/duration"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="0min"
+                android:textSize="30sp"
+                android:layout_marginEnd="10dp"
+                android:textColor="@color/colorAccent"
+                tools:ignore="HardcodedText">
+            </TextView>
+        </LinearLayout>
+
+        <com.jjoe64.graphview.GraphView
+            android:id="@+id/graph"
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="10dp"
             />
     </RelativeLayout>
 </com.sothree.slidinguppanel.SlidingUpPanelLayout>

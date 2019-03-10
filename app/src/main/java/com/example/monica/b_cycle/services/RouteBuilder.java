@@ -2,8 +2,12 @@ package com.example.monica.b_cycle.services;
 
 import android.graphics.Color;
 import android.location.Location;
+import android.util.Log;
+import android.widget.TextView;
 
 import com.example.monica.b_cycle.MapsActivity;
+import com.example.monica.b_cycle.model.Distance;
+import com.example.monica.b_cycle.model.Duration;
 import com.example.monica.b_cycle.model.Elevation;
 import com.example.monica.b_cycle.model.Route;
 import com.example.monica.b_cycle.model.TravelMode;
@@ -31,14 +35,18 @@ public class RouteBuilder implements RouteFinderListener, ElevationFinderListene
     private List<PatternItem> polylinePattern = Arrays.asList(new Dot(), new Gap(20));
     private GoogleMap mMap;
     private GraphView mGraph;
+    private TextView mDistance;
+    private TextView mDuration;
     private List<Route> allRoutes;
     private List<LatLng> allBikePoints;
     private PolylineOptions bikeRoute;
 
-    public RouteBuilder(LatLng origin, LatLng destination, GoogleMap mMap, GraphView mGraph) {
+    public RouteBuilder(LatLng origin, LatLng destination, GoogleMap mMap, GraphView mGraph, TextView mDistance, TextView mDuration) {
         new RouteFinder(origin, destination, TravelMode.DRIVING, this).findRoute();
         this.mMap = mMap;
         this.mGraph = mGraph;
+        this.mDistance = mDistance;
+        this.mDuration = mDuration;
         allRoutes = new ArrayList<>();
         allBikePoints = new ArrayList<>();
         MapsActivity.bikeRoutes.forEach(route -> {
@@ -52,7 +60,7 @@ public class RouteBuilder implements RouteFinderListener, ElevationFinderListene
      * @param routes
      */
     private void drawDriveAndBikeRoute(List<Route> routes) {
-
+        double bikingDistanceInKm = 0;
         Route drivingRoute = routes.get(0);
 
         PolylineOptions bikePoly = getNewBikePoly();
@@ -68,6 +76,7 @@ public class RouteBuilder implements RouteFinderListener, ElevationFinderListene
 
                 if (arePointsClose(drivingPoint, bikePoint) && PolyUtil.distanceToLine(bikePoint, lastPoint, drivingPoint) < POINT_TO_LINE_TOLERANCE_IN_METERS) {
                     pointOnBikeTrail = true;
+                    bikingDistanceInKm += 0.1;
                     break;
                 }
             }
@@ -92,6 +101,9 @@ public class RouteBuilder implements RouteFinderListener, ElevationFinderListene
                 lastPointOnBikeTrail = true;
             }
         }
+        setDistance(drivingRoute);
+        setDuration(drivingRoute, bikingDistanceInKm, drivingRoute.getDistance().getValue() / 1000.0);
+
         mMap.addPolyline(roadPoly);
         mMap.addPolyline(bikePoly);
     }
@@ -141,16 +153,37 @@ public class RouteBuilder implements RouteFinderListener, ElevationFinderListene
         return distance[0] <= POINT_TO_POINT_TOLERANCE_IN_METERS;
     }
 
+    private void setDistance(Route route) {
+        mDistance.setText(route.getDistance().getText());
+    }
+
+    private void setDuration(Route route, double bikingDistance, double drivingDistance) {
+        double durationInHours = bikingDistance / TravelMode.BICYCLING.getDefaultSpeed() + drivingDistance / TravelMode.DRIVING.getDefaultSpeed();
+        String duration = "";
+        if (durationInHours > (int) durationInHours) {
+            int minutes = (int) ((durationInHours - (int) durationInHours) * 60);
+            if ((int) durationInHours == 0) {
+                duration = String.valueOf(minutes) + "min";
+            } else {
+                duration = String.valueOf((int) durationInHours) + "h " + String.valueOf(minutes) + "min";
+            }
+        } else duration = String.valueOf(durationInHours)+ "h";
+        route.setDuration(new Duration(duration, (int) durationInHours));
+    }
+
     private void drawElevations(List<Elevation> elevations) {
+        mGraph.removeAllSeries();
         DataPoint[] dataPoints = new DataPoint[elevations.size()];
-        for (int i=0; i<elevations.size(); i++){
+        for (int i = 0; i < elevations.size(); i++) {
             dataPoints[i] = new DataPoint(i, elevations.get(i).getElevation().intValue());
         }
         LineGraphSeries<DataPoint> series = new LineGraphSeries<>(dataPoints);
         series.setDrawBackground(true);
-        series.setAnimated(true);
         series.setDrawDataPoints(true);
         series.setThickness(8);
+        mGraph.getViewport().setXAxisBoundsManual(true);
+        mGraph.getViewport().setMinX(0); // set the min value of the viewport of x axis<br />
+        mGraph.getViewport().setMaxX(15);
         mGraph.addSeries(series);
     }
 
@@ -166,10 +199,14 @@ public class RouteBuilder implements RouteFinderListener, ElevationFinderListene
         new ElevationFinder(routes.get(0), this).findRoute();
         allRoutes.add(routes.get(0));
         drawDriveAndBikeRoute(getDrivingRoutes());
+        mDuration.setText(routes.get(0).getDuration().getText());
+
     }
 
     @Override
     public void onElevationFinderSuccess(List<Elevation> elevations) {
+
         drawElevations(elevations);
+
     }
 }
