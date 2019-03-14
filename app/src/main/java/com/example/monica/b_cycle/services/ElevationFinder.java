@@ -65,8 +65,7 @@ public class ElevationFinder implements Finder {
      * Creates a new Async instance of JsonDownloader in order to retrieve the details
      * from the URL created.
      */
-    void findRoute() {
-        Log.d("CACA", createURL());
+    void findElevations() {
         new JsonDownloader(this).execute(createURL());
     }
 

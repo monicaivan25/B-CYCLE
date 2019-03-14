@@ -13,35 +13,32 @@ public class JsonDownloader extends AsyncTask<String, Void, String> {
 
     private Finder finder;
 
-    public JsonDownloader(Finder finder) {
+    JsonDownloader(Finder finder) {
         this.finder = finder;
     }
 
     /**
      * Creates URL from the first parameter.
-     * Attempts to download data from URL. Returns data as String if successful.
+     * Attempts to download data from URL and returns data as String if successful.
      *
-     * @param params
-     * @return
+     * @param params arguments
+     * @return json data as string
      */
     @Override
     protected String doInBackground(String... params) {
         String link = params[0];
         try {
-            URL url = new URL(link);
-            InputStream is = url.openConnection().getInputStream();
-            StringBuffer buffer = new StringBuffer();
+            InputStream is = new URL(link).openConnection().getInputStream();
             BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+            StringBuilder builder = new StringBuilder();
 
             String line;
             while ((line = reader.readLine()) != null) {
-                buffer.append(line + "\n");
+                builder.append(line + "\n");
             }
 
-            return buffer.toString();
+            return builder.toString();
 
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -50,10 +47,10 @@ public class JsonDownloader extends AsyncTask<String, Void, String> {
 
     /**
      * Calls the Json parser method from the listener.
-     * @param result
+     * @param jsonData data retrieved from calling the finder API
      */
     @Override
-    protected void onPostExecute(String result) {
-        finder.parseJson(result);
+    protected void onPostExecute(String jsonData) {
+        finder.parseJson(jsonData);
     }
 }
