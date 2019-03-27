@@ -1,7 +1,5 @@
 package com.example.monica.b_cycle.services;
 
-import android.util.Log;
-
 import com.example.monica.b_cycle.model.Elevation;
 import com.example.monica.b_cycle.model.Route;
 import com.google.android.gms.maps.model.LatLng;
@@ -37,6 +35,10 @@ public class ElevationFinder implements Finder {
     private List<LatLng> getEssentialPoints(Route route) {
         List<LatLng> essentialPoints = new ArrayList<>();
         List<LatLng> allPoints = route.getPointList();
+
+        if(allPoints.size() <= NUMBER_OF_ELEVATION_POINTS){
+            return allPoints;
+        }
         int ratio = allPoints.size() / NUMBER_OF_ELEVATION_POINTS;
         for (int i = 0; i < allPoints.size(); i += ratio) {
             essentialPoints.add(allPoints.get(i));

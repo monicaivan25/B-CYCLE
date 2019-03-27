@@ -37,9 +37,14 @@ public class RouteBuilder implements RouteFinderListener, ElevationFinderListene
     private TextView mDuration;
     private List<LatLng> allBikePoints;
     private RouteBuilderListener routeBuilderListener;
+    private TravelMode travelMode;
+    private Boolean customRoute;
+    private Route builtRoute;
 
-    public RouteBuilder(LatLng origin, LatLng destination, GoogleMap mMap, GraphView mGraph, TextView mDistance, TextView mDuration, RouteBuilderListener routeBuilderListener) {
-        new RouteFinder(origin, destination, TravelMode.DRIVING, this).findRoute();
+    public RouteBuilder(LatLng origin, LatLng destination, GoogleMap mMap, GraphView mGraph, TextView mDistance, TextView mDuration, RouteBuilderListener routeBuilderListener, TravelMode travelMode, Boolean customRoute) {
+        new RouteFinder(origin, destination, travelMode, this).findRoute();
+        this.travelMode = travelMode;
+        this.customRoute = customRoute;
         this.mMap = mMap;
         this.mGraph = mGraph;
         this.mDistance = mDistance;
@@ -52,11 +57,11 @@ public class RouteBuilder implements RouteFinderListener, ElevationFinderListene
     }
 
     /**
-     * Draws the combined route formed of Road + Bicycle lanes
+     * Draws the combined route formed of Road + Bicycle lanes or Sidewalk + bicycle lanes
      *
      * @param drivingRoute
      */
-    private void drawDriveAndBikeRoute(Route drivingRoute) {
+    private void drawCombinedRoute(Route drivingRoute) {
         double bikingDistanceInKm = 0;
 
         PolylineOptions bikePoly = getNewFullPoly();
@@ -103,56 +108,6 @@ public class RouteBuilder implements RouteFinderListener, ElevationFinderListene
     }
 
     /**
-     * Draws the combined route formed of sidewalk + bicycle lanes
-     * @param walkingRoute
-     */
-    private void drawWalkAndBikeRoute(Route walkingRoute) {
-        double bikingDistanceInKm = 0;
-
-        PolylineOptions bikePoly = getNewFullPoly();
-        PolylineOptions roadPoly = getNewDottedPoly();
-        List<LatLng> drivingRoutePointList = walkingRoute.getPointList();
-
-        LatLng lastPoint = drivingRoutePointList.get(0);
-        int bikeTrailPoints = 0;
-
-        for (LatLng drivingPoint : drivingRoutePointList) {
-            boolean pointOnBikeTrail = false;
-            for (LatLng bikePoint : allBikePoints) {
-                if (arePointsClose(drivingPoint, bikePoint) && PolyUtil.distanceToLine(bikePoint, lastPoint, drivingPoint) < 30) {
-                    pointOnBikeTrail = true;
-                    bikeTrailPoints++;
-                    bikingDistanceInKm += 0.1;
-                    break;
-                }
-            }
-            if (!pointOnBikeTrail) {
-                if (bikeTrailPoints <= INTERSECTION_TOLERANCE_IN_POINTS) {
-                    roadPoly.addAll(bikePoly.getPoints());
-                } else mMap.addPolyline(bikePoly);
-
-                roadPoly.add(lastPoint);
-                roadPoly.add(drivingPoint);
-
-                bikePoly = getNewFullPoly();
-            } else {
-                bikePoly.add(lastPoint);
-                bikePoly.add(drivingPoint);
-
-                mMap.addPolyline(roadPoly);
-                roadPoly = getNewDottedPoly();
-            }
-
-            lastPoint = drivingPoint;
-        }
-        setDistance(walkingRoute);
-        setDuration(walkingRoute, bikingDistanceInKm, (walkingRoute.getDistance().getValue() / 1000.0) - bikingDistanceInKm);
-
-        mMap.addPolyline(roadPoly);
-        mMap.addPolyline(bikePoly);
-    }
-
-    /**
      * @return New custom Polyline signifying Road or Sidewalk areas
      */
     private PolylineOptions getNewDottedPoly() {
@@ -187,6 +142,7 @@ public class RouteBuilder implements RouteFinderListener, ElevationFinderListene
 
     /**
      * Sets the distance of the given route
+     *
      * @param route
      */
     private void setDistance(Route route) {
@@ -196,13 +152,14 @@ public class RouteBuilder implements RouteFinderListener, ElevationFinderListene
     /**
      * Sets the duration of the given route, based on how the distance travelled on bicycle lanes,
      * the distance travelled on Road/Sidewalk and TODO: Elevation
+     *
      * @param route
      * @param bikingDistance
-     * @param drivingDistance
+     * @param drivingOrWalkingDistance
      */
-    private void setDuration(Route route, double bikingDistance, double drivingDistance) {
-        double durationInHours = bikingDistance / TravelMode.BICYCLING.getDefaultSpeed() + drivingDistance / TravelMode.DRIVING.getDefaultSpeed();
-        String duration = "";
+    private void setDuration(Route route, double bikingDistance, double drivingOrWalkingDistance) {
+        double durationInHours = bikingDistance / TravelMode.BICYCLING.getDefaultSpeed() + drivingOrWalkingDistance / this.travelMode.getDefaultSpeed();
+        String duration;
         if (durationInHours > (int) durationInHours) {
             int minutes = (int) ((durationInHours - (int) durationInHours) * 60);
             if ((int) durationInHours == 0) {
@@ -217,6 +174,7 @@ public class RouteBuilder implements RouteFinderListener, ElevationFinderListene
 
     /**
      * Draws the elevation points on the graphView
+     *
      * @param elevations
      */
     private void drawElevations(List<Elevation> elevations) {
@@ -243,9 +201,12 @@ public class RouteBuilder implements RouteFinderListener, ElevationFinderListene
     @Override
     public void onRouteFinderSuccess(List<Route> routes) {
         try {
-            new ElevationFinder(routes.get(0), this).findElevations();
-            drawDriveAndBikeRoute(routes.get(0));
-//        drawWalkAndBikeRoute(routes.get(0));
+            if (customRoute) {
+                routeBuilderListener.onPartialRouteFound(routes.get(0));
+            } else {
+                new ElevationFinder(routes.get(0), this).findElevations();
+            }
+            drawCombinedRoute(routes.get(0));
         } catch (IndexOutOfBoundsException e) {
             routeBuilderListener.onRouteNotFound();
         }

@@ -15,6 +15,7 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
@@ -29,10 +30,13 @@ import com.example.monica.b_cycle.exceptions.LocationNotFoundAlertDialog;
 import com.example.monica.b_cycle.exceptions.LocationNotFoundException;
 import com.example.monica.b_cycle.exceptions.NoRouteFoundAlertDialog;
 import com.example.monica.b_cycle.model.Route;
+import com.example.monica.b_cycle.model.TravelMode;
 import com.example.monica.b_cycle.services.DatabaseService;
 import com.example.monica.b_cycle.services.PlaceAutocompleteAdapter;
 import com.example.monica.b_cycle.services.RouteBuilder;
 import com.example.monica.b_cycle.services.RouteBuilderListener;
+import com.github.clans.fab.FloatingActionButton;
+import com.github.clans.fab.FloatingActionMenu;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
@@ -52,6 +56,7 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.Task;
@@ -73,13 +78,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private GoogleMap mMap;
     private Boolean mLocationPermissionGranted = false;
-    private AutoCompleteTextView mOrigin;
-    private AutoCompleteTextView mDestination;
+    private Boolean editMode;
+    private List<Marker> markers;
+
     private ImageView mGpsButton;
     private ImageView mSearchButton;
-    private ImageView mShowBikeLanesButton;
+    private FloatingActionButton mShowBikeLanesButton;
+    private FloatingActionButton mEditModeButton;
+    private FloatingActionButton mTravelModeButton;
+    private FloatingActionButton mSaveButton;
+    private FloatingActionButton mUndoButton;
+    private FloatingActionMenu mMenu;
+
+    private AutoCompleteTextView mOrigin;
+    private AutoCompleteTextView mDestination;
     private TextView mDistance;
     private TextView mDuration;
+    private TravelMode mTravelMode;
+    private Route mCustomRoute;
 
     private ProgressBar mSpinner;
     private View mSpinnerBackground;
@@ -92,8 +108,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private GoogleApiClient mGoogleApiClient;
     private LatLng currentLocationCoordinates;
 
-    private LatLng origin;
-    private LatLng destination;
+    private LatLng originLatLng;
+    private LatLng destinationLatLng;
 
     /**
      * Initializes all elements of map and calls method for permission request.
@@ -104,17 +120,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+        editMode = Boolean.FALSE;
 
         mOrigin = findViewById(R.id.input_origin);
         mDestination = findViewById(R.id.input_destination);
         mGpsButton = findViewById(R.id.ic_gps);
         mSearchButton = findViewById(R.id.ic_magnify);
-        mShowBikeLanesButton = findViewById(R.id.ic_bikelanes);
+        mShowBikeLanesButton = findViewById(R.id.ic_bike_lanes);
+        mEditModeButton = findViewById(R.id.ic_edit_mode);
         mGraph = findViewById(R.id.graph);
         mDistance = findViewById(R.id.distance);
         mDuration = findViewById(R.id.duration);
         mSpinner = findViewById(R.id.progressBar1);
         mSpinnerBackground = findViewById(R.id.progress_background);
+        mTravelMode = TravelMode.DRIVING;
+        mTravelModeButton = findViewById(R.id.ic_change_travel_mode);
+        mSaveButton = findViewById(R.id.save);
+        mUndoButton = findViewById(R.id.undo);
+        mMenu = findViewById(R.id.menu);
 
         mGeoDataClient = Places.getGeoDataClient(this);
         mPlaceDetectionClient = Places.getPlaceDetectionClient(this);
@@ -143,7 +166,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         initGpsButton();
         initSearchButton();
         initBikeLaneButton();
+        initTravelModeButton();
+        initEditModeButton();
         initGraph();
+        initMapAction();
 
         if (mLocationPermissionGranted) {
             getDeviceLocation();
@@ -187,7 +213,39 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     /**
-     * Sets the autocomplete click listener as the origin search bar on click listener.
+     * Initialises onMapLongClickListener
+     */
+    private void initMapAction() {
+        mMap.setOnMapClickListener(latLng -> {
+            mMenu.close(true);
+        });
+        mMap.setOnMapLongClickListener(latLng -> {
+            if (editMode) {
+                if (originLatLng == null) {
+                    originLatLng = latLng;
+                    mMap.addMarker(new MarkerOptions()
+                            .position(latLng)
+                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+                } else {
+                    if (destinationLatLng != null) {
+                        originLatLng = destinationLatLng;
+                    }
+                    destinationLatLng = latLng;
+                    findPartialDirection();
+                    markers.add(mMap.addMarker(new MarkerOptions()
+                            .position(latLng)
+                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))));
+                }
+            } else {
+                originLatLng = currentLocationCoordinates;
+                destinationLatLng = latLng;
+                findDirection(TravelMode.DRIVING);
+            }
+        });
+    }
+
+    /**
+     * Sets the autocomplete click listener as the originLatLng search bar on click listener.
      * Sets the autocomplete adapter as the search bar's adapter.
      * Sets on editor listener for "done", "search", "down" or "enter".
      */
@@ -201,9 +259,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     || event.getAction() == KeyEvent.ACTION_DOWN
                     || event.getAction() == KeyEvent.KEYCODE_ENTER) {
                 try {
-                    origin = geoLocate();
+                    originLatLng = geoLocate();
                 } catch (LocationNotFoundException e) {
-                    Log.d(TAG, "Could not find the inputed origin address.");
+                    Log.d(TAG, "Could not find the inputed originLatLng address.");
                 }
             }
             return false;
@@ -211,7 +269,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     /**
-     * Sets the autocomplete click listener as the destination search bar on click listener.
+     * Sets the autocomplete click listener as the destinationLatLng search bar on click listener.
      * Sets the autocomplete adapter as the search bar's adapter.
      * Sets on editor listener for "done", "search", "down" or "enter".
      */
@@ -225,10 +283,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     || event.getAction() == KeyEvent.ACTION_DOWN
                     || event.getAction() == KeyEvent.KEYCODE_ENTER) {
                 try {
-                    destination = geoLocate();
-                    findDirection();
+                    destinationLatLng = geoLocate();
+                    findDirection(mTravelMode);
                 } catch (LocationNotFoundException e) {
-                    Log.d(TAG, "Could not find the inputed destination address.");
+                    Log.d(TAG, "Could not find the inputed destinationLatLng address.");
                 }
             }
             return false;
@@ -242,7 +300,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mGpsButton.setOnClickListener(v -> getDeviceLocation());
         mGpsButton.setOnLongClickListener(v -> {
             getDeviceLocation();
-            origin = currentLocationCoordinates;
+            originLatLng = currentLocationCoordinates;
             mOrigin.setText("My Location");
             return true;
         });
@@ -253,22 +311,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      */
     private void initSearchButton() {
         mSearchButton.setOnClickListener(v -> {
-            if (origin == null) {
+            if (originLatLng == null) {
                 try {
-                    origin = geoLocate();
+                    originLatLng = geoLocate();
                 } catch (LocationNotFoundException e) {
                     Log.d(TAG, "Could not find the inputed origin address.");
                 }
             }
-            if (destination == null) {
+            if (destinationLatLng == null) {
                 try {
-                    destination = geoLocate();
+                    destinationLatLng = geoLocate();
                 } catch (LocationNotFoundException e) {
                     Log.d(TAG, "Could not find the inputed destination address.");
                 }
             }
-            if (origin != null && destination != null) {
-                findDirection();
+            if (originLatLng != null && destinationLatLng != null) {
+                findDirection(mTravelMode);
                 hideKeyboard();
             }
         });
@@ -286,6 +344,70 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             } else {
                 showAllBikeLanes();
                 clicked[0] = true;
+            }
+        });
+    }
+
+    /**
+     * Set on click listener for the Edit Mode button.
+     */
+    private void initEditModeButton() {
+        mEditModeButton.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_add_30dp));
+        mEditModeButton.setOnClickListener(v -> {
+            if (editMode) {
+                editMode = Boolean.FALSE;
+                markers.forEach(Marker::remove);
+
+                if (destinationLatLng != null) {
+                    moveCamera(destinationLatLng, DEFAULT_ZOOM, true);
+                    new RouteBuilder(originLatLng, destinationLatLng, mMap, mGraph, mDistance, mDuration, this, TravelMode.WALKING, Boolean.FALSE)
+                            .onRouteFinderSuccess(new ArrayList() {{
+                                add(mCustomRoute);
+                            }});
+                }
+                mTravelModeButton.setVisibility(View.VISIBLE);
+                mSaveButton.setVisibility(View.GONE);
+                mUndoButton.setVisibility(View.GONE);
+                mEditModeButton.setLabelText("Create custom route");
+                mEditModeButton.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_add_30dp));
+
+                Toast.makeText(MapsActivity.this, "Edit Mode Off", Toast.LENGTH_SHORT).show();
+            } else {
+                markers = new ArrayList<>();
+                originLatLng = null;
+                destinationLatLng = null;
+                mMap.clear();
+                editMode = Boolean.TRUE;
+                mTravelModeButton.setVisibility(View.GONE);
+                mSaveButton.setVisibility(View.VISIBLE);
+                mUndoButton.setVisibility(View.VISIBLE);
+                mEditModeButton.setLabelText("Done");
+                mEditModeButton.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_done_24dp));
+                Toast.makeText(MapsActivity.this, "Edit Mode On", Toast.LENGTH_SHORT).show();
+            }
+            mMenu.close(false);
+        });
+    }
+
+    /**
+     * Set on click listener for the Travel Mode button.
+     */
+    private void initTravelModeButton() {
+        mTravelModeButton.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_walk_24dp));
+        mTravelModeButton.setOnClickListener(v -> {
+            if (mTravelMode == TravelMode.WALKING) {
+                mTravelMode = TravelMode.DRIVING;
+                mTravelModeButton.setLabelText("Get sidewalk route");
+                mTravelModeButton.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_walk_24dp));
+                Toast.makeText(MapsActivity.this, "Travel Mode: Roads & bike lanes", Toast.LENGTH_SHORT).show();
+            } else {
+                mTravelMode = TravelMode.WALKING;
+                mTravelModeButton.setLabelText("Get road route");
+                mTravelModeButton.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_car_24dp));
+                Toast.makeText(MapsActivity.this, "Travel Mode: Sidewalk & bike lanes", Toast.LENGTH_SHORT).show();
+            }
+            if (originLatLng != null && destinationLatLng != null) {
+                findDirection(mTravelMode);
             }
         });
     }
@@ -339,8 +461,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         mMap.setMyLocationEnabled(true);
                         Location currentLocation = (Location) task.getResult();
                         currentLocationCoordinates = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
-                        if (origin == null) {
-                            origin = currentLocationCoordinates;
+                        if (originLatLng == null) {
+                            originLatLng = currentLocationCoordinates;
                         }
                         moveCamera(currentLocationCoordinates, DEFAULT_ZOOM, false);
                     } else {
@@ -381,26 +503,32 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     /**
      * Creates a new RouteBuilder to call upon the Google Directions request URL
-     * to query about different routes from origin to destination.
+     * to query about different routes from originLatLng to destinationLatLng.
      * Builds route as per user request.
      */
-    private void findDirection() {
+    private void findDirection(TravelMode travelMode) {
         mMap.clear();
         mSpinner.setVisibility(View.VISIBLE);
         mSpinnerBackground.setVisibility(View.VISIBLE);
 
-        new RouteBuilder(origin, destination, mMap, mGraph, mDistance, mDuration, this);
+        new RouteBuilder(originLatLng, destinationLatLng, mMap, mGraph, mDistance, mDuration, this, travelMode, Boolean.FALSE);
         mMap.addMarker(new MarkerOptions()
-                .position(origin)
+                .position(originLatLng)
                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
-        moveCamera(destination, DEFAULT_ZOOM, true);
+        moveCamera(destinationLatLng, DEFAULT_ZOOM, true);
     }
 
+    private void findPartialDirection() {
+        mSpinner.setVisibility(View.VISIBLE);
+        mSpinnerBackground.setVisibility(View.VISIBLE);
 
+        new RouteBuilder(originLatLng, destinationLatLng, mMap, mGraph, mDistance, mDuration, this, TravelMode.WALKING, Boolean.TRUE);
+        moveCamera(destinationLatLng, DEFAULT_ZOOM, false);
+    }
     /*----------------------------------LOCATION AUTOCOMPLETE----------------------------------*/
 
     /**
-     * Listener for the autocomplete suggestions given to the user for the origin
+     * Listener for the autocomplete suggestions given to the user for the originLatLng
      */
     private AdapterView.OnItemClickListener mOriginAutoCompleteClickListener = new AdapterView.OnItemClickListener() {
         @Override
@@ -414,7 +542,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     };
 
     /**
-     * Listener for the autocomplete suggestions given to the user for the destination
+     * Listener for the autocomplete suggestions given to the user for the destinationLatLng
      */
     private AdapterView.OnItemClickListener mDestinationAutoCompleteClickListener = new AdapterView.OnItemClickListener() {
         @Override
@@ -429,7 +557,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     /**
      * Callback for when we receive the Place object corespondent to the autocomplete selected by the user
-     * Callback for the origin AutoCompleteTextView
+     * Callback for the originLatLng AutoCompleteTextView
      */
     private ResultCallback<PlaceBuffer> mUpdatePlaceDetailsForOriginCallback = places -> {
         hideKeyboard();
@@ -438,14 +566,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             Log.d(TAG, "onResult: " + places.getStatus().toString());
             places.release();
         } else {
-            origin = places.get(0).getLatLng();
+            originLatLng = places.get(0).getLatLng();
             places.release();
         }
     };
 
     /**
      * Callback for when we receive the Place object corespondent to the autocomplete selected by the user
-     * Callback for the destination AutoCompleteTextView
+     * Callback for the destinationLatLng AutoCompleteTextView
      */
     private ResultCallback<PlaceBuffer> mUpdatePlaceDetailsForDestinationCallback = places -> {
         hideKeyboard();
@@ -454,9 +582,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             Log.d(TAG, "onResult: " + places.getStatus().toString());
             places.release();
         } else {
-            destination = places.get(0).getLatLng();
+            destinationLatLng = places.get(0).getLatLng();
             places.release();
-            findDirection();
+            findDirection(mTravelMode);
         }
     };
 
@@ -512,6 +640,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     .color(Color.rgb(167, 121, 233))
                     .width(10);
             mMap.addPolyline(bikePoly);
+            Toast.makeText(MapsActivity.this, "Showing all bike lanes", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -559,6 +688,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Log.e(TAG, "Connection Failed: " + connectionResult.getErrorMessage());
     }
 
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        return super.onTouchEvent(event);
+    }
+
     /**
      * Method Overridden from RouteBuilderListener interface
      */
@@ -576,5 +710,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         NoRouteFoundAlertDialog dialog = new NoRouteFoundAlertDialog();
         dialog.show(getSupportFragmentManager(), "No route found.");
         this.onFinish();
+    }
+
+    @Override
+    public void onPartialRouteFound(Route partialRoute) {
+        this.onFinish();
+        if (mCustomRoute == null) {
+            mCustomRoute = partialRoute;
+        } else {
+            mCustomRoute.getPointList().addAll(partialRoute.getPointList());
+            mCustomRoute.setDestination(partialRoute.getDestination());
+            mCustomRoute.getDistance().setValue(partialRoute.getDistance().getValue() + partialRoute.getDistance().getValue());
+        }
     }
 }
