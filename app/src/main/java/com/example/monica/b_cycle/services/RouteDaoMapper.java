@@ -20,7 +20,6 @@ public class RouteDaoMapper {
         route.setDistance(routeDao.getDistance());
         route.setDuration(routeDao.getDuration());
         route.setElevationList(routeDao.getElevationList());
-        route.setRecordedSpeed(routeDao.getRecordedSpeed());
 
         List<LatLng> routePoints = new ArrayList<>();
         List<MyLatLng> routeDaoPoints = routeDao.getPointList();
@@ -40,7 +39,6 @@ public class RouteDaoMapper {
         routeDao.setDistance(route.getDistance());
         routeDao.setDuration(route.getDuration());
         routeDao.setElevationList(route.getElevationList());
-        routeDao.setRecordedSpeed(route.getRecordedSpeed());
 
         List<MyLatLng> routeDaoPoints = new ArrayList<>();
         List<LatLng> routePoints = route.getPointList();

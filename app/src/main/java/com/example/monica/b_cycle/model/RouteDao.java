@@ -8,7 +8,6 @@ public class RouteDao {
     private List<Elevation> elevationList;
     private SimpleAddressDAO origin;
     private SimpleAddressDAO destination;
-    private Speed recordedSpeed;
     private List<MyLatLng> pointList;
 
     private TravelMode travelMode;
@@ -16,13 +15,12 @@ public class RouteDao {
     public RouteDao() {
     }
 
-    public RouteDao(Distance distance, Duration duration, List<Elevation> elevationList, SimpleAddressDAO origin, SimpleAddressDAO destination, Speed recordedSpeed, List<MyLatLng> pointList, TravelMode travelMode) {
+    public RouteDao(Distance distance, Duration duration, List<Elevation> elevationList, SimpleAddressDAO origin, SimpleAddressDAO destination, List<MyLatLng> pointList, TravelMode travelMode) {
         this.distance = distance;
         this.duration = duration;
         this.elevationList = elevationList;
         this.origin = origin;
         this.destination = destination;
-        this.recordedSpeed = recordedSpeed;
         this.pointList = pointList;
         this.travelMode = travelMode;
     }
@@ -65,14 +63,6 @@ public class RouteDao {
 
     public void setDestination(SimpleAddressDAO destination) {
         this.destination = destination;
-    }
-
-    public Speed getRecordedSpeed() {
-        return recordedSpeed;
-    }
-
-    public void setRecordedSpeed(Speed recordedSpeed) {
-        this.recordedSpeed = recordedSpeed;
     }
 
     public List<MyLatLng> getPointList() {

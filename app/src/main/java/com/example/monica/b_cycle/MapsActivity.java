@@ -82,10 +82,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private GoogleMap mMap;
     private Boolean mLocationPermissionGranted = false;
     private Boolean editMode;
-    private Boolean bikeLanesVisible;
     private List<Marker> markers;
     private List<Route> allPartialRoutes;
     private List<List<Polyline>> allCustomRoutePolylines;
+    private List<Polyline> bikeLanePolylines;
 
     private ImageView mGpsButton;
     private ImageView mSearchButton;
@@ -354,7 +354,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private void initUndoButton() {
         mUndoButton.setOnClickListener(v -> {
             if (allPartialRoutes.size() > 0) {
-                LatLng lastDestination = markers.get(markers.size()-2).getPosition();
+                LatLng lastDestination = markers.get(markers.size() - 2).getPosition();
                 Route routeToBeUndone = allPartialRoutes.get(allPartialRoutes.size() - 1);
                 mCustomRoute.getPointList().removeAll(routeToBeUndone.getPointList());
                 mCustomRoute.setDestination(new SimpleAddress(null, lastDestination));
@@ -363,11 +363,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 originLatLng = lastDestination;
                 destinationLatLng = lastDestination;
 
-                markers.get(markers.size()-1).remove();
-                markers.remove(markers.size()-1);
-                allCustomRoutePolylines.get(allCustomRoutePolylines.size()-1)
+                markers.get(markers.size() - 1).remove();
+                markers.remove(markers.size() - 1);
+                allCustomRoutePolylines.get(allCustomRoutePolylines.size() - 1)
                         .forEach(Polyline::remove);
-                allCustomRoutePolylines.remove(allCustomRoutePolylines.size()-1);
+                allCustomRoutePolylines.remove(allCustomRoutePolylines.size() - 1);
             }
         });
     }
@@ -376,11 +376,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      * Sets on click listener for the Bike Lanes button.
      */
     private void initBikeLaneButton() {
-        bikeLanesVisible = false;
+        bikeLanePolylines = new ArrayList<>();
         mShowBikeLanesButton.setOnClickListener(v -> {
-            if (bikeLanesVisible) {
-                mMap.clear();
-                bikeLanesVisible = false;
+            if (bikeLanePolylines.size() != 0) {
+                bikeLanePolylines.forEach(Polyline::remove);
+                bikeLanePolylines = new ArrayList<>();
             } else {
                 for (Route route : bikeRoutes) {
                     PolylineOptions bikePoly = new PolylineOptions()
@@ -388,10 +388,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             .addAll(route.getPointList())
                             .color(Color.rgb(167, 121, 233))
                             .width(10);
-                    mMap.addPolyline(bikePoly);
+                    bikeLanePolylines.add(mMap.addPolyline(bikePoly));
                     Toast.makeText(MapsActivity.this, "Showing all bike lanes", Toast.LENGTH_SHORT).show();
                 }
-                bikeLanesVisible = true;
             }
         });
     }
@@ -400,7 +399,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      * Set on click listener for the Edit Mode button.
      */
     private void initEditModeButton() {
-        mEditModeButton.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_add_30dp));
+        mEditModeButton.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_add));
         mEditModeButton.setOnClickListener(v -> {
             if (editMode) {
                 editMode = Boolean.FALSE;
@@ -416,7 +415,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 mSaveButton.setVisibility(View.GONE);
                 mUndoButton.setVisibility(View.GONE);
                 mEditModeButton.setLabelText("Create custom route");
-                mEditModeButton.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_add_30dp));
+                mEditModeButton.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_add));
 
                 Toast.makeText(MapsActivity.this, "Edit Mode Off", Toast.LENGTH_SHORT).show();
             } else {
@@ -427,7 +426,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 mSaveButton.setVisibility(View.VISIBLE);
                 mUndoButton.setVisibility(View.VISIBLE);
                 mEditModeButton.setLabelText("Done");
-                mEditModeButton.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_done_24dp));
+                mEditModeButton.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_done));
                 Toast.makeText(MapsActivity.this, "Edit Mode On", Toast.LENGTH_SHORT).show();
             }
             mMenu.close(false);
@@ -438,17 +437,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      * Set on click listener for the Travel Mode button.
      */
     private void initTravelModeButton() {
-        mTravelModeButton.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_walk_24dp));
+        mTravelModeButton.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_walk));
         mTravelModeButton.setOnClickListener(v -> {
             if (mTravelMode == TravelMode.WALKING) {
                 mTravelMode = TravelMode.DRIVING;
                 mTravelModeButton.setLabelText("Get sidewalk route");
-                mTravelModeButton.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_walk_24dp));
+                mTravelModeButton.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_walk));
                 Toast.makeText(MapsActivity.this, "Travel Mode: Roads & bike lanes", Toast.LENGTH_SHORT).show();
             } else {
                 mTravelMode = TravelMode.WALKING;
                 mTravelModeButton.setLabelText("Get road route");
-                mTravelModeButton.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_car_24dp));
+                mTravelModeButton.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_car));
                 Toast.makeText(MapsActivity.this, "Travel Mode: Sidewalk & bike lanes", Toast.LENGTH_SHORT).show();
             }
             if (originLatLng != null && destinationLatLng != null) {
@@ -563,6 +562,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         moveCamera(destinationLatLng, DEFAULT_ZOOM, true);
     }
 
+    /**
+     * Creates a new RouteBuilder with customRoute parameter set to Boolean.FALSE in order to
+     * call RouteBuilderListener's onPartialRoutFound method.
+     * Builds route as per user request.
+     */
     private void findPartialDirection() {
         mSpinner.setVisibility(View.VISIBLE);
         mSpinnerBackground.setVisibility(View.VISIBLE);
@@ -686,7 +690,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 //        db.addToDatabase(new LatLng(), new LatLng());
     }
 
-    private void refreshAllVariables(){
+    /**
+     * Clears the map and returns route-related variables to their default value.
+     */
+    private void refreshAllVariables() {
         mDuration.setText("0 km");
         mDistance.setText("0min");
         markers = new ArrayList<>();

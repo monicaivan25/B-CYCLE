@@ -12,7 +12,6 @@ public class Route {
     private List<Elevation> elevationList;
     private SimpleAddress origin;
     private SimpleAddress destination;
-    private Speed recordedSpeed;
     private List<LatLng> pointList;
     private Polyline polyline;
     private TravelMode travelMode;
@@ -20,13 +19,12 @@ public class Route {
     public Route() {
     }
 
-    public Route(Distance distance, Duration duration, List<Elevation> elevationList, SimpleAddress origin, SimpleAddress destination, Speed recordedSpeed, List<LatLng> pointList, TravelMode travelMode) {
+    public Route(Distance distance, Duration duration, List<Elevation> elevationList, SimpleAddress origin, SimpleAddress destination, List<LatLng> pointList, TravelMode travelMode) {
         this.distance = distance;
         this.duration = duration;
         this.elevationList = elevationList;
         this.origin = origin;
         this.destination = destination;
-        this.recordedSpeed = recordedSpeed;
         this.pointList = pointList;
         this.travelMode = travelMode;
     }
@@ -71,14 +69,6 @@ public class Route {
         this.destination = destination;
     }
 
-    public Speed getRecordedSpeed() {
-        return recordedSpeed;
-    }
-
-    public void setRecordedSpeed(Speed recordedSpeed) {
-        this.recordedSpeed = recordedSpeed;
-    }
-
     public List<LatLng> getPointList() {
         return pointList;
     }
@@ -111,7 +101,6 @@ public class Route {
                 ", elevationList=" + elevationList +
                 ", origin=" + origin +
                 ", destination=" + destination +
-                ", recordedSpeed=" + recordedSpeed +
                 ", pointList=" + pointList +
                 ", travelMode=" + travelMode +
                 '}';

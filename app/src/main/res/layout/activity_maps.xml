@@ -211,7 +211,7 @@
             fab:menu_colorPressed="@color/colorPrimaryDarker"
             fab:menu_colorRipple="#99FFFFFF"
             fab:menu_fab_size="normal"
-            fab:menu_icon="@drawable/ic_menu_30dp"
+            fab:menu_icon="@drawable/ic_menu"
             fab:menu_labels_colorNormal="#333333"
             fab:menu_labels_colorPressed="#444444"
             fab:menu_labels_colorRipple="#66FFFFFF"
@@ -245,7 +245,7 @@
                 fab:fab_colorNormal="@color/colorPrimaryDark"
                 fab:fab_colorPressed="@color/colorPrimaryDarker"
                 fab:menu_labels_colorRipple="#66FFFFFF"
-                fab:fab_label="Show all bike lanes"
+                fab:fab_label="Toggle all bike lanes"
                 fab:fab_size="mini"
                 android:src="@drawable/ic_bike"
                 />
@@ -260,7 +260,7 @@
                 fab:fab_label="Save as bike lane"
                 fab:fab_size="mini"
                 android:visibility="gone"
-                android:src="@drawable/ic_save_30dp"
+                android:src="@drawable/ic_save"
                 />
 
             <com.github.clans.fab.FloatingActionButton
@@ -273,7 +273,7 @@
                 fab:fab_label="Undo"
                 fab:fab_size="mini"
                 android:visibility="gone"
-                android:src="@drawable/ic_undo_30dp"
+                android:src="@drawable/ic_undo"
                 />
 
             <com.github.clans.fab.FloatingActionButton
@@ -295,7 +295,7 @@
                 android:layout_marginLeft="10dp"
                 android:layout_marginRight="10dp"
                 android:layout_marginBottom="10dp"
-                android:src="@drawable/ic_add_30dp"
+                android:src="@drawable/ic_add"
                 fab:fab_colorNormal="@color/colorPrimaryDark"
                 fab:fab_colorPressed="@color/colorPrimaryDarker"
                 fab:menu_labels_colorRipple="#66FFFFFF"
@@ -321,7 +321,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_centerInParent="true"
-                android:src="@drawable/ic_drag_handle_black_24dp" />
+                android:src="@drawable/ic_drag_handle" />
         </RelativeLayout>
 
         <LinearLayout
