@@ -1,6 +1,7 @@
 package com.example.monica.b_cycle.model;
 
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Polyline;
 
 import java.util.List;
 
@@ -13,7 +14,7 @@ public class Route {
     private SimpleAddress destination;
     private Speed recordedSpeed;
     private List<LatLng> pointList;
-
+    private Polyline polyline;
     private TravelMode travelMode;
 
     public Route() {
@@ -92,6 +93,14 @@ public class Route {
 
     public void setTravelMode(TravelMode travelMode) {
         this.travelMode = travelMode;
+    }
+
+    public Polyline getPolyline() {
+        return polyline;
+    }
+
+    public void setPolyline(Polyline polyline) {
+        this.polyline = polyline;
     }
 
     @Override

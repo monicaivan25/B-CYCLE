@@ -21,7 +21,7 @@ public class ElevationFinder implements Finder {
     private ElevationFinderListener elevationFinderListener;
     private List<Elevation> elevations = new ArrayList<>();
 
-    ElevationFinder(Route route, ElevationFinderListener elevationFinderListener) {
+    public ElevationFinder(Route route, ElevationFinderListener elevationFinderListener) {
         this.essentialPoints = getEssentialPoints(route);
         this.elevationFinderListener = elevationFinderListener;
     }
@@ -67,7 +67,7 @@ public class ElevationFinder implements Finder {
      * Creates a new Async instance of JsonDownloader in order to retrieve the details
      * from the URL created.
      */
-    void findElevations() {
+    public void findElevations() {
         new JsonDownloader(this).execute(createURL());
     }
 

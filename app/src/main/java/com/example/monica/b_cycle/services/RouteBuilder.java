@@ -14,6 +14,7 @@ import com.google.android.gms.maps.model.Dot;
 import com.google.android.gms.maps.model.Gap;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.PatternItem;
+import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.maps.android.PolyUtil;
 import com.jjoe64.graphview.GraphView;
@@ -39,7 +40,6 @@ public class RouteBuilder implements RouteFinderListener, ElevationFinderListene
     private RouteBuilderListener routeBuilderListener;
     private TravelMode travelMode;
     private Boolean customRoute;
-    private Route builtRoute;
 
     public RouteBuilder(LatLng origin, LatLng destination, GoogleMap mMap, GraphView mGraph, TextView mDistance, TextView mDuration, RouteBuilderListener routeBuilderListener, TravelMode travelMode, Boolean customRoute) {
         new RouteFinder(origin, destination, travelMode, this).findRoute();
@@ -61,9 +61,10 @@ public class RouteBuilder implements RouteFinderListener, ElevationFinderListene
      *
      * @param drivingRoute
      */
-    private void drawCombinedRoute(Route drivingRoute) {
-        double bikingDistanceInKm = 0;
+    private List<Polyline> drawCombinedRoute(Route drivingRoute) {
+        List<Polyline> polylines = new ArrayList<>();
 
+        double bikingDistanceInKm = 0;
         PolylineOptions bikePoly = getNewFullPoly();
         PolylineOptions roadPoly = getNewDottedPoly();
         List<LatLng> drivingRoutePointList = drivingRoute.getPointList();
@@ -84,7 +85,9 @@ public class RouteBuilder implements RouteFinderListener, ElevationFinderListene
             if (!pointOnBikeTrail) {
                 if (bikeTrailPoints <= INTERSECTION_TOLERANCE_IN_POINTS) {
                     roadPoly.addAll(bikePoly.getPoints());
-                } else mMap.addPolyline(bikePoly);
+                } else {
+                    polylines.add(mMap.addPolyline(bikePoly));
+                }
 
                 roadPoly.add(lastPoint);
                 roadPoly.add(drivingPoint);
@@ -94,7 +97,7 @@ public class RouteBuilder implements RouteFinderListener, ElevationFinderListene
                 bikePoly.add(lastPoint);
                 bikePoly.add(drivingPoint);
 
-                mMap.addPolyline(roadPoly);
+                polylines.add(mMap.addPolyline(roadPoly));
                 roadPoly = getNewDottedPoly();
             }
 
@@ -103,8 +106,9 @@ public class RouteBuilder implements RouteFinderListener, ElevationFinderListene
         setDistance(drivingRoute);
         setDuration(drivingRoute, bikingDistanceInKm, (drivingRoute.getDistance().getValue() / 1000.0) - bikingDistanceInKm);
 
-        mMap.addPolyline(roadPoly);
-        mMap.addPolyline(bikePoly);
+        polylines.add(mMap.addPolyline(roadPoly));
+        polylines.add(mMap.addPolyline(bikePoly));
+        return polylines;
     }
 
     /**
@@ -201,12 +205,12 @@ public class RouteBuilder implements RouteFinderListener, ElevationFinderListene
     @Override
     public void onRouteFinderSuccess(List<Route> routes) {
         try {
+            List<Polyline> polylines = drawCombinedRoute(routes.get(0));
             if (customRoute) {
-                routeBuilderListener.onPartialRouteFound(routes.get(0));
+                routeBuilderListener.onPartialRouteFound(routes.get(0), polylines);
             } else {
                 new ElevationFinder(routes.get(0), this).findElevations();
             }
-            drawCombinedRoute(routes.get(0));
         } catch (IndexOutOfBoundsException e) {
             routeBuilderListener.onRouteNotFound();
         }

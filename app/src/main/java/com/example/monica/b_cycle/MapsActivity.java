@@ -30,8 +30,10 @@ import com.example.monica.b_cycle.exceptions.LocationNotFoundAlertDialog;
 import com.example.monica.b_cycle.exceptions.LocationNotFoundException;
 import com.example.monica.b_cycle.exceptions.NoRouteFoundAlertDialog;
 import com.example.monica.b_cycle.model.Route;
+import com.example.monica.b_cycle.model.SimpleAddress;
 import com.example.monica.b_cycle.model.TravelMode;
 import com.example.monica.b_cycle.services.DatabaseService;
+import com.example.monica.b_cycle.services.ElevationFinder;
 import com.example.monica.b_cycle.services.PlaceAutocompleteAdapter;
 import com.example.monica.b_cycle.services.RouteBuilder;
 import com.example.monica.b_cycle.services.RouteBuilderListener;
@@ -58,6 +60,7 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.Task;
 import com.jjoe64.graphview.GraphView;
@@ -79,7 +82,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private GoogleMap mMap;
     private Boolean mLocationPermissionGranted = false;
     private Boolean editMode;
+    private Boolean bikeLanesVisible;
     private List<Marker> markers;
+    private List<Route> allPartialRoutes;
+    private List<List<Polyline>> allCustomRoutePolylines;
 
     private ImageView mGpsButton;
     private ImageView mSearchButton;
@@ -96,6 +102,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private TextView mDuration;
     private TravelMode mTravelMode;
     private Route mCustomRoute;
+    private RouteBuilder mRouteBuilder;
 
     private ProgressBar mSpinner;
     private View mSpinnerBackground;
@@ -155,7 +162,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     /**
      * Manipulates the map once available.
      * This callback is triggered when the map is ready to be used.
-     * Applies style to map and initializes search bar.
+     * Applies style to map and initializes all UI elements.
      */
     @Override
     public void onMapReady(GoogleMap googleMap) {
@@ -168,6 +175,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         initBikeLaneButton();
         initTravelModeButton();
         initEditModeButton();
+        initSaveButton();
+        initUndoButton();
         initGraph();
         initMapAction();
 
@@ -232,10 +241,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     }
                     destinationLatLng = latLng;
                     findPartialDirection();
-                    markers.add(mMap.addMarker(new MarkerOptions()
-                            .position(latLng)
-                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))));
                 }
+                markers.add(mMap.addMarker(new MarkerOptions()
+                        .position(latLng)
+                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))));
             } else {
                 originLatLng = currentLocationCoordinates;
                 destinationLatLng = latLng;
@@ -333,17 +342,56 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     /**
+     * Sets on click listener for the Save button
+     */
+    private void initSaveButton() {
+
+    }
+
+    /**
+     * Sets on click listener for the Undo button
+     */
+    private void initUndoButton() {
+        mUndoButton.setOnClickListener(v -> {
+            if (allPartialRoutes.size() > 0) {
+                LatLng lastDestination = markers.get(markers.size()-2).getPosition();
+                Route routeToBeUndone = allPartialRoutes.get(allPartialRoutes.size() - 1);
+                mCustomRoute.getPointList().removeAll(routeToBeUndone.getPointList());
+                mCustomRoute.setDestination(new SimpleAddress(null, lastDestination));
+                mCustomRoute.getDistance().setValue(mCustomRoute.getDistance().getValue() - routeToBeUndone.getDistance().getValue());
+
+                originLatLng = lastDestination;
+                destinationLatLng = lastDestination;
+
+                markers.get(markers.size()-1).remove();
+                markers.remove(markers.size()-1);
+                allCustomRoutePolylines.get(allCustomRoutePolylines.size()-1)
+                        .forEach(Polyline::remove);
+                allCustomRoutePolylines.remove(allCustomRoutePolylines.size()-1);
+            }
+        });
+    }
+
+    /**
      * Sets on click listener for the Bike Lanes button.
      */
     private void initBikeLaneButton() {
-        final boolean[] clicked = {false};
+        bikeLanesVisible = false;
         mShowBikeLanesButton.setOnClickListener(v -> {
-            if (clicked[0]) {
+            if (bikeLanesVisible) {
                 mMap.clear();
-                clicked[0] = false;
+                bikeLanesVisible = false;
             } else {
-                showAllBikeLanes();
-                clicked[0] = true;
+                for (Route route : bikeRoutes) {
+                    PolylineOptions bikePoly = new PolylineOptions()
+                            .geodesic(true)
+                            .addAll(route.getPointList())
+                            .color(Color.rgb(167, 121, 233))
+                            .width(10);
+                    mMap.addPolyline(bikePoly);
+                    Toast.makeText(MapsActivity.this, "Showing all bike lanes", Toast.LENGTH_SHORT).show();
+                }
+                bikeLanesVisible = true;
             }
         });
     }
@@ -356,15 +404,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mEditModeButton.setOnClickListener(v -> {
             if (editMode) {
                 editMode = Boolean.FALSE;
-                markers.forEach(Marker::remove);
 
-                if (destinationLatLng != null) {
+                if (markers.size() > 1) {
                     moveCamera(destinationLatLng, DEFAULT_ZOOM, true);
-                    new RouteBuilder(originLatLng, destinationLatLng, mMap, mGraph, mDistance, mDuration, this, TravelMode.WALKING, Boolean.FALSE)
-                            .onRouteFinderSuccess(new ArrayList() {{
-                                add(mCustomRoute);
-                            }});
+                    new ElevationFinder(mCustomRoute, mRouteBuilder).findElevations();
+                    Log.d("tingies", mCustomRoute.getPointList().toString());
                 }
+
+                markers.forEach(Marker::remove);
                 mTravelModeButton.setVisibility(View.VISIBLE);
                 mSaveButton.setVisibility(View.GONE);
                 mUndoButton.setVisibility(View.GONE);
@@ -373,11 +420,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 Toast.makeText(MapsActivity.this, "Edit Mode Off", Toast.LENGTH_SHORT).show();
             } else {
-                markers = new ArrayList<>();
-                originLatLng = null;
-                destinationLatLng = null;
-                mMap.clear();
+                refreshAllVariables();
                 editMode = Boolean.TRUE;
+
                 mTravelModeButton.setVisibility(View.GONE);
                 mSaveButton.setVisibility(View.VISIBLE);
                 mUndoButton.setVisibility(View.VISIBLE);
@@ -522,7 +567,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mSpinner.setVisibility(View.VISIBLE);
         mSpinnerBackground.setVisibility(View.VISIBLE);
 
-        new RouteBuilder(originLatLng, destinationLatLng, mMap, mGraph, mDistance, mDuration, this, TravelMode.WALKING, Boolean.TRUE);
+        mRouteBuilder = new RouteBuilder(originLatLng, destinationLatLng, mMap, mGraph, mDistance, mDuration, this, TravelMode.WALKING, Boolean.TRUE);
         moveCamera(destinationLatLng, DEFAULT_ZOOM, false);
     }
     /*----------------------------------LOCATION AUTOCOMPLETE----------------------------------*/
@@ -629,21 +674,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Toast.makeText(MapsActivity.this, message, Toast.LENGTH_SHORT).show();
     }
 
-    /**
-     * Creates polylines representative of all bicycle lanes.
-     */
-    private void showAllBikeLanes() {
-        for (Route route : bikeRoutes) {
-            PolylineOptions bikePoly = new PolylineOptions()
-                    .geodesic(true)
-                    .addAll(route.getPointList())
-                    .color(Color.rgb(167, 121, 233))
-                    .width(10);
-            mMap.addPolyline(bikePoly);
-            Toast.makeText(MapsActivity.this, "Showing all bike lanes", Toast.LENGTH_SHORT).show();
-        }
-    }
-
     void dummydatabase() {
         DatabaseService db = new DatabaseService(this);
 //        db.addToDatabase(new LatLng(47.170095, 27.576226), new LatLng(47.190355, 27.559079), TravelMode.DRIVING);
@@ -654,6 +684,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 //        db.addToDatabase(new LatLng(47.154486, 27.604114), new LatLng(47.152010, 27.588313), TravelMode.WALKING);
 //        db.addToDatabase(new LatLng(47.165670, 27.579843), new LatLng(47.158991, 27.585694), TravelMode.WALKING);
 //        db.addToDatabase(new LatLng(), new LatLng());
+    }
+
+    private void refreshAllVariables(){
+        mDuration.setText("0 km");
+        mDistance.setText("0min");
+        markers = new ArrayList<>();
+        mGraph.removeAllSeries();
+        mCustomRoute = null;
+        allPartialRoutes = new ArrayList<>();
+        allCustomRoutePolylines = new ArrayList<>();
+        originLatLng = null;
+        destinationLatLng = null;
+        mMap.clear();
     }
 
 
@@ -712,15 +755,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         this.onFinish();
     }
 
+    /**
+     * Method Overridden from RouteBuilderListener interface
+     */
     @Override
-    public void onPartialRouteFound(Route partialRoute) {
+    public void onPartialRouteFound(Route partialRoute, List<Polyline> polylines) {
         this.onFinish();
         if (mCustomRoute == null) {
+            allPartialRoutes.add(partialRoute);
+            allCustomRoutePolylines.add(polylines);
             mCustomRoute = partialRoute;
         } else {
+            allPartialRoutes.add(partialRoute);
+            allCustomRoutePolylines.add(polylines);
             mCustomRoute.getPointList().addAll(partialRoute.getPointList());
             mCustomRoute.setDestination(partialRoute.getDestination());
-            mCustomRoute.getDistance().setValue(partialRoute.getDistance().getValue() + partialRoute.getDistance().getValue());
+            mCustomRoute.getDistance().setValue(mCustomRoute.getDistance().getValue() + partialRoute.getDistance().getValue());
         }
     }
 }
