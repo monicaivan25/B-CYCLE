@@ -38,12 +38,11 @@ dependencies {
     implementation 'com.google.maps.android:android-maps-utils:0.4+'
     implementation 'com.google.firebase:firebase-core:16.0.6'
     implementation 'com.google.firebase:firebase-database:16.0.5'
-    implementation 'com.google.firebase:firebase-auth:16.1.0'
+    implementation 'com.google.firebase:firebase-auth:16.2.0'
 
     implementation 'com.sothree.slidinguppanel:library:3.4.0'
     implementation 'com.jjoe64:graphview:4.2.2'
     implementation 'com.github.clans:fab:1.6.4'
-
 }
 
 apply plugin: 'com.google.gms.google-services'

@@ -26,19 +26,21 @@
             tools:context=".MapsActivity" />
 
         <RelativeLayout
-            android:id="@+id/relLayout"
+            android:id="@+id/origin_layout"
             android:layout_width="match_parent"
-            android:layout_height="40dp"
-            android:layout_marginLeft="5dp"
-            android:layout_marginTop="5dp"
-            android:layout_marginRight="5dp"
+            android:layout_height="50dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginRight="10dp"
             android:background="@color/colorPrimaryDark"
-            android:elevation="2dp">
+            android:elevation="2dp"
+            android:visibility="gone"
+            >
 
             <AutoCompleteTextView
                 android:id="@+id/input_origin"
                 android:layout_width="match_parent"
-                android:layout_height="40dp"
+                android:layout_height="match_parent"
                 android:layout_alignParentTop="true"
                 android:layout_alignParentBottom="true"
                 android:layout_marginStart="20dp"
@@ -46,7 +48,7 @@
                 android:layout_marginEnd="40dp"
                 android:layout_marginBottom="0dp"
                 android:background="@null"
-                android:hint="My Location"
+                android:hint="Enter Origin (default: current location)"
                 android:imeOptions="actionDone"
                 android:singleLine="true"
                 android:textColor="#FFF"
@@ -54,7 +56,7 @@
                 android:textSize="15sp" />
 
             <ImageView
-                android:id="@+id/ic_gps"
+                android:id="@+id/gps_button"
                 android:layout_width="20dp"
                 android:layout_height="20dp"
                 android:layout_alignParentEnd="true"
@@ -68,20 +70,21 @@
 
 
         <RelativeLayout
+            android:id="@+id/destination_layout"
             android:layout_width="match_parent"
-            android:layout_height="40dp"
-            android:layout_marginLeft="5dp"
-            android:layout_marginTop="45dp"
-            android:layout_marginRight="5dp"
+            android:layout_height="50dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginRight="10dp"
             android:background="@color/colorPrimaryDark"
             android:elevation="2dp">
 
             <AutoCompleteTextView
                 android:id="@+id/input_destination"
                 android:layout_width="match_parent"
-                android:layout_height="40dp"
+                android:layout_height="match_parent"
                 android:layout_alignParentTop="true"
-                android:layout_marginStart="20dp"
+                android:layout_marginStart="40dp"
                 android:layout_marginEnd="40dp"
                 android:background="@null"
                 android:hint="Enter Destination"
@@ -89,10 +92,22 @@
                 android:singleLine="true"
                 android:textColor="#FFF"
                 android:textColorHint="@color/textColorHint"
-                android:textSize="15sp" />
+                android:textSize="15sp"
+                />
 
             <ImageView
-                android:id="@+id/ic_magnify"
+                android:id="@+id/expand_button"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_alignParentStart="true"
+                android:layout_centerHorizontal="true"
+                android:layout_centerVertical="true"
+                android:layout_margin="10dp"
+                android:imeOptions="actionGo"
+                android:src="@drawable/ic_expand_down" />
+
+            <ImageView
+                android:id="@+id/search_button"
                 android:layout_width="20dp"
                 android:layout_height="20dp"
                 android:layout_alignParentEnd="true"
@@ -239,7 +254,7 @@
             fab:menu_showShadow="true">
 
             <com.github.clans.fab.FloatingActionButton
-                android:id="@+id/ic_bike_lanes"
+                android:id="@+id/bike_lanes_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 fab:fab_colorNormal="@color/colorPrimaryDark"
@@ -277,7 +292,7 @@
                 />
 
             <com.github.clans.fab.FloatingActionButton
-                android:id="@+id/ic_change_travel_mode"
+                android:id="@+id/travel_mode_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 fab:fab_colorNormal="@color/colorPrimaryDark"
@@ -287,7 +302,7 @@
                 fab:fab_size="mini" />
 
             <com.github.clans.fab.FloatingActionButton
-                android:id="@+id/ic_edit_mode"
+                android:id="@+id/custom_route_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentRight="true"

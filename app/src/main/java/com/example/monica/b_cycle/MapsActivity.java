@@ -14,15 +14,18 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.AutoCompleteTextView;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -89,6 +92,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private ImageView mGpsButton;
     private ImageView mSearchButton;
+    private ImageView mExpandButton;
     private FloatingActionButton mShowBikeLanesButton;
     private FloatingActionButton mEditModeButton;
     private FloatingActionButton mTravelModeButton;
@@ -96,6 +100,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private FloatingActionButton mUndoButton;
     private FloatingActionMenu mMenu;
 
+    private RelativeLayout mOriginLayout;
+    private RelativeLayout mDestinationLayout;
     private AutoCompleteTextView mOrigin;
     private AutoCompleteTextView mDestination;
     private TextView mDistance;
@@ -129,19 +135,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         setContentView(R.layout.activity_maps);
         editMode = Boolean.FALSE;
 
+        mOriginLayout = findViewById(R.id.origin_layout);
+        mDestinationLayout = findViewById(R.id.destination_layout);
         mOrigin = findViewById(R.id.input_origin);
         mDestination = findViewById(R.id.input_destination);
-        mGpsButton = findViewById(R.id.ic_gps);
-        mSearchButton = findViewById(R.id.ic_magnify);
-        mShowBikeLanesButton = findViewById(R.id.ic_bike_lanes);
-        mEditModeButton = findViewById(R.id.ic_edit_mode);
+        mGpsButton = findViewById(R.id.gps_button);
+        mSearchButton = findViewById(R.id.search_button);
+        mExpandButton = findViewById(R.id.expand_button);
+        mShowBikeLanesButton = findViewById(R.id.bike_lanes_button);
+        mEditModeButton = findViewById(R.id.custom_route_button);
+        mTravelModeButton = findViewById(R.id.travel_mode_button);
+
         mGraph = findViewById(R.id.graph);
         mDistance = findViewById(R.id.distance);
         mDuration = findViewById(R.id.duration);
         mSpinner = findViewById(R.id.progressBar1);
         mSpinnerBackground = findViewById(R.id.progress_background);
         mTravelMode = TravelMode.DRIVING;
-        mTravelModeButton = findViewById(R.id.ic_change_travel_mode);
         mSaveButton = findViewById(R.id.save);
         mUndoButton = findViewById(R.id.undo);
         mMenu = findViewById(R.id.menu);
@@ -172,6 +182,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         initDestinationBar();
         initGpsButton();
         initSearchButton();
+        initExpandButton();
         initBikeLaneButton();
         initTravelModeButton();
         initEditModeButton();
@@ -248,6 +259,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             } else {
                 originLatLng = currentLocationCoordinates;
                 destinationLatLng = latLng;
+                mDestination.setText(latLng.latitude + ", " + latLng.longitude);
                 findDirection(TravelMode.DRIVING);
             }
         });
@@ -259,6 +271,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      * Sets on editor listener for "done", "search", "down" or "enter".
      */
     private void initOriginBar() {
+        mOrigin.setOnClickListener(v -> {
+            mOrigin.getText().clear();
+        });
         mOrigin.setOnItemClickListener(mOriginAutoCompleteClickListener);
         mOriginPlaceAutocompleteAdapter = new PlaceAutocompleteAdapter(this, mGeoDataClient, LAT_LNG_BOUNDS, null);
         mOrigin.setAdapter(mOriginPlaceAutocompleteAdapter);
@@ -283,6 +298,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      * Sets on editor listener for "done", "search", "down" or "enter".
      */
     private void initDestinationBar() {
+        mDestination.setOnClickListener(v -> {
+            mDestination.getText().clear();
+        });
         mDestination.setOnItemClickListener(mDestinationAutoCompleteClickListener);
         mDestinationAutocompleteAdapter = new PlaceAutocompleteAdapter(this, mGeoDataClient, LAT_LNG_BOUNDS, null);
         mDestination.setAdapter(mDestinationAutocompleteAdapter);
@@ -337,6 +355,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             if (originLatLng != null && destinationLatLng != null) {
                 findDirection(mTravelMode);
                 hideKeyboard();
+            }
+        });
+    }
+
+    /**
+     * Sets on click listener for Expand Button
+     */
+    private void initExpandButton() {
+        mExpandButton.setOnClickListener(v -> {
+            if (mOriginLayout.getVisibility() == View.VISIBLE) {
+                mOriginLayout.setVisibility(View.GONE);
+                mExpandButton.setImageResource(R.drawable.ic_expand_down);
+                setMargins(mDestinationLayout, 10, 10, 10, 0);
+            } else {
+                mOriginLayout.setVisibility(View.VISIBLE);
+                mExpandButton.setImageResource(R.drawable.ic_expand_up);
+                setMargins(mDestinationLayout, 10, 65, 10, 0);
             }
         });
     }
@@ -407,7 +442,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 if (markers.size() > 1) {
                     moveCamera(destinationLatLng, DEFAULT_ZOOM, true);
                     new ElevationFinder(mCustomRoute, mRouteBuilder).findElevations();
-                    Log.d("tingies", mCustomRoute.getPointList().toString());
                 }
 
                 markers.forEach(Marker::remove);
@@ -572,7 +606,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mSpinnerBackground.setVisibility(View.VISIBLE);
 
         mRouteBuilder = new RouteBuilder(originLatLng, destinationLatLng, mMap, mGraph, mDistance, mDuration, this, TravelMode.WALKING, Boolean.TRUE);
-        moveCamera(destinationLatLng, DEFAULT_ZOOM, false);
     }
     /*----------------------------------LOCATION AUTOCOMPLETE----------------------------------*/
 
@@ -596,7 +629,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private AdapterView.OnItemClickListener mDestinationAutoCompleteClickListener = new AdapterView.OnItemClickListener() {
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
             final AutocompletePrediction item = mDestinationAutocompleteAdapter.getItem(position);
             final String placeId = item.getPlaceId();
             PendingResult<PlaceBuffer> placeBufferPendingResult = Places.GeoDataApi.getPlaceById(mGoogleApiClient, placeId);
@@ -696,6 +728,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private void refreshAllVariables() {
         mDuration.setText("0 km");
         mDistance.setText("0min");
+        mDestination.getText().clear();
+        mOrigin.getText().clear();
         markers = new ArrayList<>();
         mGraph.removeAllSeries();
         mCustomRoute = null;
@@ -706,6 +740,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.clear();
     }
 
+    private void setMargins(View view, int left, int top, int right, int bottom) {
+        if (view.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
+            ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
+            p.setMargins(getSizeInDp(left), getSizeInDp(top), getSizeInDp(right), getSizeInDp(bottom));
+            view.requestLayout();
+        }
+    }
+
+    private int getSizeInDp(int size) {
+        return (int) TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP, size, getResources()
+                        .getDisplayMetrics());
+    }
 
     /*----------------------------------OVERRIDDEN INTERFACE METHODS----------------------------------*/
 
