@@ -8,8 +8,8 @@
     tools:context=".LoginActivity">
 
     <ImageView
-        android:layout_width="100dp"
-        android:layout_height="100dp"
+        android:layout_width="130dp"
+        android:layout_height="130dp"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="100dp"
         android:src="@mipmap/ic_launcher_round" />
@@ -32,7 +32,11 @@
             android:layout_marginStart="25dp"
             android:background="@drawable/edit_text_bottom_border"
             android:textColor="@color/textColor"
-            android:hint="Email address"/>
+            android:hint="Email address"
+            android:textColorHint="@color/textColorHint"
+            android:imeOptions="actionDone"
+            android:singleLine="true"
+            />
 
         <EditText
             android:id="@+id/password"
@@ -43,7 +47,12 @@
             android:layout_marginTop="60dp"
             android:background="@drawable/edit_text_bottom_border"
             android:textColor="@color/textColor"
-            android:hint="Password"/>
+            android:hint="Password"
+            android:textColorHint="@color/textColorHint"
+            android:imeOptions="actionDone"
+            android:singleLine="true"
+            android:inputType="textPassword"
+            />
 
         <Button
             android:id="@+id/login_button"

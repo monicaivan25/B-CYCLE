@@ -3,6 +3,7 @@ package com.example.monica.b_cycle;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Color;
@@ -99,6 +100,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private FloatingActionButton mTravelModeButton;
     private FloatingActionButton mSaveButton;
     private FloatingActionButton mUndoButton;
+    private FloatingActionButton mLogoutButton;
     private FloatingActionMenu mMenu;
 
     private RelativeLayout mOriginLayout;
@@ -108,7 +110,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private TextView mDistance;
     private TextView mDuration;
     private TravelMode mTravelMode;
-    private Route mCustomRoute;
+    private Route mRoute;
     private RouteBuilder mRouteBuilder;
 
     private ProgressBar mSpinner;
@@ -155,6 +157,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mTravelMode = TravelMode.DRIVING;
         mSaveButton = findViewById(R.id.save);
         mUndoButton = findViewById(R.id.undo);
+        mLogoutButton = findViewById(R.id.logout_button);
         mMenu = findViewById(R.id.menu);
 
         mGeoDataClient = Places.getGeoDataClient(this);
@@ -165,7 +168,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .addApi(Places.PLACE_DETECTION_API)
                 .enableAutoManage(this, this)
                 .build();
-        dummydatabase();
         getLocationPermission();
         initMap();
     }
@@ -191,6 +193,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         initEditModeButton();
         initSaveButton();
         initUndoButton();
+        initLogoutButton();
         initGraph();
         initMapAction();
 
@@ -385,7 +388,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      * Sets on click listener for the Save button
      */
     private void initSaveButton() {
-
+        mSaveButton.setOnClickListener(v -> {
+            DatabaseService db = new DatabaseService(this);
+            db.addToDatabase(mRoute);
+        });
     }
 
     /**
@@ -396,9 +402,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             if (allPartialRoutes.size() > 0) {
                 LatLng lastDestination = markers.get(markers.size() - 2).getPosition();
                 Route routeToBeUndone = allPartialRoutes.get(allPartialRoutes.size() - 1);
-                mCustomRoute.getPointList().removeAll(routeToBeUndone.getPointList());
-                mCustomRoute.setDestination(new SimpleAddress(null, lastDestination));
-                mCustomRoute.getDistance().setValue(mCustomRoute.getDistance().getValue() - routeToBeUndone.getDistance().getValue());
+                mRoute.getPointList().removeAll(routeToBeUndone.getPointList());
+                mRoute.setDestination(new SimpleAddress(null, lastDestination));
+                mRoute.getDistance().setValue(mRoute.getDistance().getValue() - routeToBeUndone.getDistance().getValue());
 
                 originLatLng = lastDestination;
                 destinationLatLng = lastDestination;
@@ -429,7 +435,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             .color(Color.rgb(255, 195, 66))
                             .width(10);
                     bikeLanePolylines.add(mMap.addPolyline(bikePoly));
-                    Toast.makeText(MapsActivity.this, "Showing all bike lanes", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -446,7 +451,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 if (markers.size() > 1) {
                     moveCamera(destinationLatLng, DEFAULT_ZOOM, true);
-                    new ElevationFinder(mCustomRoute, mRouteBuilder).findElevations();
+                    new ElevationFinder(mRoute, mRouteBuilder).findElevations();
                 }
 
                 markers.forEach(Marker::remove);
@@ -468,6 +473,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 mEditModeButton.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_done));
                 Toast.makeText(MapsActivity.this, "Edit Mode On", Toast.LENGTH_SHORT).show();
             }
+            mRoute = null;
             mMenu.close(false);
         });
     }
@@ -482,16 +488,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 mTravelMode = TravelMode.DRIVING;
                 mTravelModeButton.setLabelText("Get sidewalk route");
                 mTravelModeButton.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_walk));
-                Toast.makeText(MapsActivity.this, "Travel Mode: Roads & bike lanes", Toast.LENGTH_SHORT).show();
             } else {
                 mTravelMode = TravelMode.WALKING;
                 mTravelModeButton.setLabelText("Get road route");
                 mTravelModeButton.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_car));
-                Toast.makeText(MapsActivity.this, "Travel Mode: Sidewalk & bike lanes", Toast.LENGTH_SHORT).show();
             }
             if (originLatLng != null && destinationLatLng != null) {
                 findDirection(mTravelMode);
             }
+            mMenu.close(false);
+        });
+    }
+
+    private void initLogoutButton() {
+        mLogoutButton.setOnClickListener(v -> {
+            LoginActivity.signOut();
+            startActivity(new Intent(MapsActivity.this, LoginActivity.class));
         });
     }
 
@@ -591,6 +603,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      */
     private void findDirection(TravelMode travelMode) {
         mMap.clear();
+        mRoute = null;
         mSpinner.setVisibility(View.VISIBLE);
         mSpinnerBackground.setVisibility(View.VISIBLE);
 
@@ -607,6 +620,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      * Builds route as per user request.
      */
     private void findPartialDirection() {
+        mRoute = null;
         mSpinner.setVisibility(View.VISIBLE);
         mSpinnerBackground.setVisibility(View.VISIBLE);
 
@@ -715,18 +729,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Toast.makeText(MapsActivity.this, message, Toast.LENGTH_SHORT).show();
     }
 
-    void dummydatabase() {
-        DatabaseService db = new DatabaseService(this);
-//        db.addToDatabase(new LatLng(47.170095, 27.576226), new LatLng(47.190355, 27.559079), TravelMode.DRIVING);
-//        db.addToDatabase(new LatLng(47.173751, 27.539233), new LatLng(47.173378, 27.560231), TravelMode.DRIVING);
-//        db.addToDatabase(new LatLng(47.169090, 27.577570), new LatLng(47.162010, 27.594817), TravelMode.DRIVING);
-//        db.addToDatabase(new LatLng(47.158793, 27.601097), new LatLng(47.156457, 27.603424), TravelMode.DRIVING);
-//        db.addToDatabase(new LatLng(47.150937, 27.586846), new LatLng(47.134892, 27.573074), TravelMode.DRIVING);
-//        db.addToDatabase(new LatLng(47.154486, 27.604114), new LatLng(47.152010, 27.588313), TravelMode.WALKING);
-//        db.addToDatabase(new LatLng(47.165670, 27.579843), new LatLng(47.158991, 27.585694), TravelMode.WALKING);
-//        db.addToDatabase(new LatLng(), new LatLng());
-    }
-
     /**
      * Clears the map and returns route-related variables to their default value.
      */
@@ -737,7 +739,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mOrigin.getText().clear();
         markers = new ArrayList<>();
         mGraph.removeAllSeries();
-        mCustomRoute = null;
+        mRoute = null;
         allPartialRoutes = new ArrayList<>();
         allCustomRoutePolylines = new ArrayList<>();
         originLatLng = null;
@@ -757,6 +759,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         return (int) TypedValue.applyDimension(
                 TypedValue.COMPLEX_UNIT_DIP, size, getResources()
                         .getDisplayMetrics());
+    }
+
+    private void stopSpinner() {
+        mSpinner.setVisibility(View.GONE);
+        mSpinnerBackground.setVisibility(View.GONE);
     }
 
     /*----------------------------------OVERRIDDEN INTERFACE METHODS----------------------------------*/
@@ -799,9 +806,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      * Method Overridden from RouteBuilderListener interface
      */
     @Override
-    public void onFinish() {
-        mSpinner.setVisibility(View.GONE);
-        mSpinnerBackground.setVisibility(View.GONE);
+    public void onFinish(Route finalRoute) {
+        stopSpinner();
+        mRoute = finalRoute;
     }
 
     /**
@@ -811,7 +818,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onRouteNotFound() {
         NoRouteFoundAlertDialog dialog = new NoRouteFoundAlertDialog();
         dialog.show(getSupportFragmentManager(), "No route found.");
-        this.onFinish();
+        stopSpinner();
     }
 
     /**
@@ -819,17 +826,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      */
     @Override
     public void onPartialRouteFound(Route partialRoute, List<Polyline> polylines) {
-        this.onFinish();
-        if (mCustomRoute == null) {
+        stopSpinner();
+        if (mRoute == null) {
             allPartialRoutes.add(partialRoute);
             allCustomRoutePolylines.add(polylines);
-            mCustomRoute = partialRoute;
+            mRoute = partialRoute;
         } else {
             allPartialRoutes.add(partialRoute);
             allCustomRoutePolylines.add(polylines);
-            mCustomRoute.getPointList().addAll(partialRoute.getPointList());
-            mCustomRoute.setDestination(partialRoute.getDestination());
-            mCustomRoute.getDistance().setValue(mCustomRoute.getDistance().getValue() + partialRoute.getDistance().getValue());
+            mRoute.getPointList().addAll(partialRoute.getPointList());
+            mRoute.setDestination(partialRoute.getDestination());
+            mRoute.getDistance().setValue(mRoute.getDistance().getValue() + partialRoute.getDistance().getValue());
         }
     }
 }

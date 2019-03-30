@@ -42,6 +42,7 @@ public class RouteBuilder implements RouteFinderListener, ElevationFinderListene
     private RouteBuilderListener routeBuilderListener;
     private TravelMode travelMode;
     private Boolean customRoute;
+    private Route routeFound;
 
     public RouteBuilder(LatLng origin, LatLng destination, GoogleMap mMap, GraphView mGraph, TextView mDistance, TextView mDuration, RouteBuilderListener routeBuilderListener, TravelMode travelMode, Boolean customRoute) {
         new RouteFinder(origin, destination, travelMode, this).findRoute();
@@ -209,11 +210,12 @@ public class RouteBuilder implements RouteFinderListener, ElevationFinderListene
     @Override
     public void onRouteFinderSuccess(List<Route> routes) {
         try {
-            List<Polyline> polylines = drawCombinedRoute(routes.get(0));
+            routeFound = routes.get(0);
+            List<Polyline> polylines = drawCombinedRoute(routeFound);
             if (customRoute) {
-                routeBuilderListener.onPartialRouteFound(routes.get(0), polylines);
+                routeBuilderListener.onPartialRouteFound(routeFound, polylines);
             } else {
-                new ElevationFinder(routes.get(0), this).findElevations();
+                new ElevationFinder(routeFound, this).findElevations();
             }
         } catch (IndexOutOfBoundsException e) {
             routeBuilderListener.onRouteNotFound();
@@ -230,6 +232,6 @@ public class RouteBuilder implements RouteFinderListener, ElevationFinderListene
     @Override
     public void onElevationFinderSuccess(List<Elevation> elevations) {
         drawElevations(elevations);
-        routeBuilderListener.onFinish();
+        routeBuilderListener.onFinish(routeFound);
     }
 }

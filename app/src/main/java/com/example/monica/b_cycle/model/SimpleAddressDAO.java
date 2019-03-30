@@ -1,5 +1,7 @@
 package com.example.monica.b_cycle.model;
 
+import com.google.android.gms.maps.model.LatLng;
+
 public class SimpleAddressDAO {
 
     private String name;

@@ -184,6 +184,18 @@
             fab:menu_showShadow="true">
 
             <com.github.clans.fab.FloatingActionButton
+                android:id="@+id/logout_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                fab:fab_colorNormal="@color/orange"
+                fab:fab_colorPressed="@color/red"
+                fab:menu_labels_colorRipple="@color/colorPrimary"
+                fab:fab_label="Logout"
+                fab:fab_size="mini"
+                android:src="@drawable/ic_signout"
+                />
+
+            <com.github.clans.fab.FloatingActionButton
                 android:id="@+id/bike_lanes_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

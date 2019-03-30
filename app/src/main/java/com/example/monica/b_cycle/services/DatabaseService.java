@@ -21,7 +21,7 @@ import java.util.List;
 
 import static com.example.monica.b_cycle.MapsActivity.bikeRoutes;
 
-public class DatabaseService implements RouteFinderListener {
+public class DatabaseService {
 
     private DatabaseReference mRootRef;
     private RouteDaoMapper mapper = new RouteDaoMapper();
@@ -92,6 +92,10 @@ public class DatabaseService implements RouteFinderListener {
         return pointC;
     }
 
+    /**
+     * Adds more points, at a constant distance, to the route to be saved
+     * @param route
+     */
     private void expandPath(Route route) {
         List<LatLng> pointList = route.getPointList();
         for (int i = 0; i < pointList.size() - 1; i++) {
@@ -106,17 +110,9 @@ public class DatabaseService implements RouteFinderListener {
         }
     }
 
-    public void addToDatabase(LatLng origin, LatLng destination, TravelMode travelMode) {
-        new RouteFinder(origin, destination, travelMode, this).findRoute();
-    }
-
-
-    @Override
-    public void onRouteFinderSuccess(List<Route> routes) {
+    public void addToDatabase(Route route) {
         DatabaseReference newRouteRef = mRootRef.push();
-        expandPath(routes.get(0));
-        newRouteRef.setValue(mapper.map(routes.get(0)));
+        expandPath(route);
+        newRouteRef.setValue(mapper.map(route));
     }
-
-
 }

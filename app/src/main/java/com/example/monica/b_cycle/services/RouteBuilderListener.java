@@ -6,7 +6,7 @@ import com.google.android.gms.maps.model.Polyline;
 import java.util.List;
 
 public interface RouteBuilderListener {
-    void onFinish();
+    void onFinish(Route finalRoute);
     void onRouteNotFound();
     void onPartialRouteFound(Route partialRoute, List<Polyline> polylines);
 }
