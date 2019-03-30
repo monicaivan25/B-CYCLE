@@ -1,6 +1,7 @@
 package com.example.monica.b_cycle;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
@@ -177,6 +178,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+//        mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+
         applyStyle();
         initOriginBar();
         initDestinationBar();
@@ -230,6 +233,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+        @SuppressLint("ResourceType") View locationButton = mapFragment.getView().findViewById(0x2);
+        locationButton.setBackgroundColor(Color.rgb(215, 101, 63));
     }
 
     /**
@@ -245,7 +250,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     originLatLng = latLng;
                     mMap.addMarker(new MarkerOptions()
                             .position(latLng)
-                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)));
                 } else {
                     if (destinationLatLng != null) {
                         originLatLng = destinationLatLng;
@@ -255,7 +260,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
                 markers.add(mMap.addMarker(new MarkerOptions()
                         .position(latLng)
-                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))));
+                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE))));
             } else {
                 originLatLng = currentLocationCoordinates;
                 destinationLatLng = latLng;
@@ -421,7 +426,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     PolylineOptions bikePoly = new PolylineOptions()
                             .geodesic(true)
                             .addAll(route.getPointList())
-                            .color(Color.rgb(167, 121, 233))
+                            .color(Color.rgb(255, 195, 66))
                             .width(10);
                     bikeLanePolylines.add(mMap.addPolyline(bikePoly));
                     Toast.makeText(MapsActivity.this, "Showing all bike lanes", Toast.LENGTH_SHORT).show();
@@ -592,7 +597,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         new RouteBuilder(originLatLng, destinationLatLng, mMap, mGraph, mDistance, mDuration, this, travelMode, Boolean.FALSE);
         mMap.addMarker(new MarkerOptions()
                 .position(originLatLng)
-                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)));
         moveCamera(destinationLatLng, DEFAULT_ZOOM, true);
     }
 
@@ -686,7 +691,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (markerWanted) {
             mMap.addMarker(new MarkerOptions()
                     .position(latLng)
-                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)));
         }
     }
 

@@ -1,12 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#2d2d2d</color>
-    <color name="colorPrimaryDark">#1d1d1d</color>
-    <color name="colorPrimaryDarkOp">#331d1d1d</color>
+    <!--<color name="colorPrimary">#2d2d2d</color>-->
+    <!--<color name="colorPrimaryDark">#1d1d1d</color>-->
+    <!--<color name="colorPrimaryDarkOp">#331d1d1d</color>-->
 
-    <color name="colorPrimaryDarker">#101010</color>
-    <color name="colorPrimaryDarkerOp">#33101010</color>
+    <!--<color name="colorPrimaryDarker">#101010</color>-->
+    <!--<color name="colorPrimaryDarkerOp">#33101010</color>-->
 
-    <color name="colorAccent">#0080FF</color>
+    <!--<color name="colorAccent">#0080FF</color>-->
+    <!--<color name="textColorHint">#696969</color>-->
+
+    <color name="colorPrimary">#FFFFFF</color>
+    <color name="colorPrimaryDark">#FFFFFF</color>
+    <color name="colorPrimaryDarkOp">#33FFE0AA</color>
+
+    <color name="colorPrimaryDarker">#D4AE6A</color>
+    <color name="colorPrimaryDarkerOp">#33D4AE6A</color>
+
+    <color name="colorAccent">#d7653f</color>
     <color name="textColorHint">#696969</color>
+
+    <color name = "yellow">#FFC342</color>
+    <color name="orange">#d7653f</color>
+    <color name="red">#F74055</color>
+    <color name="turqoise">#78ccc7</color>
+    <color name="turqoiseDarker">#2F8F88</color>
+
+    <color name="labelColor"></color>
+    <color name="textColor">#1d1d1d</color>
 </resources>

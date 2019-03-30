@@ -2,9 +2,11 @@ package com.example.monica.b_cycle.services;
 
 import android.graphics.Color;
 import android.location.Location;
+import android.support.v4.content.ContextCompat;
 import android.widget.TextView;
 
 import com.example.monica.b_cycle.MapsActivity;
+import com.example.monica.b_cycle.R;
 import com.example.monica.b_cycle.model.Duration;
 import com.example.monica.b_cycle.model.Elevation;
 import com.example.monica.b_cycle.model.Route;
@@ -117,8 +119,8 @@ public class RouteBuilder implements RouteFinderListener, ElevationFinderListene
     private PolylineOptions getNewDottedPoly() {
         return new PolylineOptions()
                 .geodesic(true)
-                .color(Color.rgb(0, 128, 255))
-                .pattern(polylinePattern).width(10);
+                .color(Color.rgb(215, 101, 63))
+                .pattern(polylinePattern).width(15);
     }
 
     /**
@@ -127,8 +129,8 @@ public class RouteBuilder implements RouteFinderListener, ElevationFinderListene
     private PolylineOptions getNewFullPoly() {
         return new PolylineOptions()
                 .geodesic(true)
-                .color(Color.rgb(0, 128, 255))
-                .width(12);
+                .color(Color.rgb(215, 101, 63))
+                .width(15);
     }
 
     /**
@@ -188,7 +190,9 @@ public class RouteBuilder implements RouteFinderListener, ElevationFinderListene
             dataPoints[i] = new DataPoint(i, elevations.get(i).getElevation().intValue());
         }
         LineGraphSeries<DataPoint> series = new LineGraphSeries<>(dataPoints);
+        series.setColor(Color.rgb(120, 204, 199));
         series.setDrawBackground(true);
+        series.setBackgroundColor(Color.argb(66, 120, 204, 199));
         series.setDrawDataPoints(true);
         series.setThickness(8);
 

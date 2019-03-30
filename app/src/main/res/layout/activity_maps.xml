@@ -8,7 +8,8 @@
     android:layout_height="match_parent"
     android:gravity="bottom"
     sothree:umanoPanelHeight="20dp"
-    sothree:umanoShadowHeight="4dp">
+    sothree:umanoShadowHeight="4dp"
+    tools:ignore="MissingDefaultResource">
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -51,7 +52,7 @@
                 android:hint="Enter Origin (default: current location)"
                 android:imeOptions="actionDone"
                 android:singleLine="true"
-                android:textColor="#FFF"
+                android:textColor="@color/textColor"
                 android:textColorHint="@color/textColorHint"
                 android:textSize="15sp" />
 
@@ -90,7 +91,7 @@
                 android:hint="Enter Destination"
                 android:imeOptions="actionDone"
                 android:singleLine="true"
-                android:textColor="#FFF"
+                android:textColor="@color/textColor"
                 android:textColorHint="@color/textColorHint"
                 android:textSize="15sp"
                 />
@@ -139,77 +140,6 @@
                 android:visibility="gone" />
         </RelativeLayout>
 
-
-        <!--<RelativeLayout-->
-        <!--android:layout_width="40dp"-->
-        <!--android:layout_height="40dp"-->
-        <!--android:layout_alignParentEnd="true"-->
-        <!--android:layout_alignParentBottom="true"-->
-        <!--android:layout_marginLeft="10dp"-->
-        <!--android:layout_marginRight="140dp"-->
-        <!--android:layout_marginBottom="10dp"-->
-        <!--android:elevation="2dp"-->
-        <!--android:background="@drawable/circle"-->
-        <!--&gt;-->
-
-        <!--<ImageView-->
-        <!--android:id="@+id/ic_bike_lanes"-->
-        <!--android:layout_width="20dp"-->
-        <!--android:layout_height="20dp"-->
-        <!--android:layout_alignParentEnd="true"-->
-        <!--android:layout_centerVertical="true"-->
-        <!--android:layout_marginStart="10dp"-->
-        <!--android:layout_marginEnd="10dp"-->
-        <!--android:imeOptions="actionSearch"-->
-        <!--android:src="@drawable/ic_bike" />-->
-        <!--</RelativeLayout>-->
-
-        <!--<RelativeLayout-->
-        <!--android:layout_width="60dp"-->
-        <!--android:layout_height="60dp"-->
-        <!--android:layout_alignParentEnd="true"-->
-        <!--android:layout_alignParentBottom="true"-->
-        <!--android:layout_marginLeft="10dp"-->
-        <!--android:layout_marginRight="10dp"-->
-        <!--android:layout_marginBottom="10dp"-->
-        <!--android:background="@drawable/circle"-->
-        <!--android:elevation="2dp">-->
-
-        <!--<ImageView-->
-        <!--android:id="@+id/ic_edit_mode"-->
-        <!--android:layout_width="30dp"-->
-        <!--android:layout_height="30dp"-->
-        <!--android:layout_alignParentEnd="true"-->
-        <!--android:layout_centerVertical="true"-->
-        <!--android:layout_marginStart="15dp"-->
-        <!--android:layout_marginEnd="15dp"-->
-        <!--android:imeOptions="actionSearch" />-->
-        <!--</RelativeLayout>-->
-
-        <!--<RelativeLayout-->
-        <!--android:layout_width="40dp"-->
-        <!--android:layout_height="40dp"-->
-        <!--android:layout_alignParentEnd="true"-->
-        <!--android:layout_alignParentBottom="true"-->
-        <!--android:layout_marginLeft="10dp"-->
-        <!--android:layout_marginRight="80dp"-->
-        <!--android:layout_marginBottom="10dp"-->
-        <!--android:background="@drawable/circle"-->
-        <!--android:elevation="2dp">-->
-
-        <!--<ImageView-->
-        <!--android:id="@+id/ic_change_travel_mode"-->
-        <!--android:layout_width="20dp"-->
-        <!--android:layout_height="20dp"-->
-        <!--android:layout_alignParentEnd="true"-->
-        <!--android:layout_centerVertical="true"-->
-        <!--android:layout_marginStart="10dp"-->
-        <!--android:layout_marginEnd="10dp"-->
-        <!--android:imeOptions="actionSearch" />-->
-        <!--</RelativeLayout>-->
-
-
-
         <com.github.clans.fab.FloatingActionMenu
             android:id="@+id/menu"
             android:layout_width="wrap_content"
@@ -222,13 +152,13 @@
             fab:menu_animationDelayPerItem="50"
             fab:menu_backgroundColor="@android:color/transparent"
             fab:menu_buttonSpacing="0dp"
-            fab:menu_colorNormal="@color/colorPrimaryDark"
-            fab:menu_colorPressed="@color/colorPrimaryDarker"
-            fab:menu_colorRipple="#99FFFFFF"
+            fab:menu_colorNormal="@color/turqoise"
+            fab:menu_colorPressed="@color/turqoiseDarker"
+            fab:menu_colorRipple="@color/colorPrimary"
             fab:menu_fab_size="normal"
             fab:menu_icon="@drawable/ic_menu"
-            fab:menu_labels_colorNormal="#333333"
-            fab:menu_labels_colorPressed="#444444"
+            fab:menu_labels_colorNormal="#999999"
+            fab:menu_labels_colorPressed="#666666"
             fab:menu_labels_colorRipple="#66FFFFFF"
             fab:menu_labels_cornerRadius="3dp"
             fab:menu_labels_ellipsize="none"
@@ -244,7 +174,7 @@
             fab:menu_labels_showAnimation="@anim/fab_slide_in_from_left"
             fab:menu_labels_showShadow="true"
             fab:menu_labels_singleLine="false"
-            fab:menu_labels_textColor="#FFFFFF"
+            fab:menu_labels_textColor="@color/colorPrimary"
             fab:menu_labels_textSize="14sp"
             fab:menu_openDirection="up"
             fab:menu_shadowColor="#66000000"
@@ -257,9 +187,8 @@
                 android:id="@+id/bike_lanes_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                fab:fab_colorNormal="@color/colorPrimaryDark"
-                fab:fab_colorPressed="@color/colorPrimaryDarker"
-                fab:menu_labels_colorRipple="#66FFFFFF"
+                fab:fab_colorNormal="@color/turqoise"
+                fab:fab_colorPressed="@color/turqoiseDarker"
                 fab:fab_label="Toggle all bike lanes"
                 fab:fab_size="mini"
                 android:src="@drawable/ic_bike"
@@ -269,9 +198,10 @@
                 android:id="@+id/save"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                fab:fab_colorNormal="@color/colorPrimaryDark"
-                fab:fab_colorPressed="@color/colorPrimaryDarker"
-                fab:menu_labels_colorRipple="#66FFFFFF"
+
+                fab:fab_colorNormal="@color/yellow"
+                fab:fab_colorPressed="@color/orange"
+                fab:menu_labels_colorRipple="@color/colorPrimary"
                 fab:fab_label="Save as bike lane"
                 fab:fab_size="mini"
                 android:visibility="gone"
@@ -282,9 +212,9 @@
                 android:id="@+id/undo"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                fab:fab_colorNormal="@color/colorPrimaryDark"
-                fab:fab_colorPressed="@color/colorPrimaryDarker"
-                fab:menu_labels_colorRipple="#66FFFFFF"
+                fab:fab_colorNormal="@color/turqoise"
+                fab:fab_colorPressed="@color/turqoiseDarker"
+                fab:menu_labels_colorRipple="@color/colorPrimary"
                 fab:fab_label="Undo"
                 fab:fab_size="mini"
                 android:visibility="gone"
@@ -295,8 +225,8 @@
                 android:id="@+id/travel_mode_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                fab:fab_colorNormal="@color/colorPrimaryDark"
-                fab:fab_colorPressed="@color/colorPrimaryDarker"
+                fab:fab_colorNormal="@color/yellow"
+                fab:fab_colorPressed="@color/orange"
                 fab:menu_labels_colorRipple="#66FFFFFF"
                 fab:fab_label="Get sidewalk route"
                 fab:fab_size="mini" />
@@ -311,9 +241,9 @@
                 android:layout_marginRight="10dp"
                 android:layout_marginBottom="10dp"
                 android:src="@drawable/ic_add"
-                fab:fab_colorNormal="@color/colorPrimaryDark"
-                fab:fab_colorPressed="@color/colorPrimaryDarker"
-                fab:menu_labels_colorRipple="#66FFFFFF"
+                fab:fab_colorNormal="@color/orange"
+                fab:fab_colorPressed="@color/red"
+                fab:menu_labels_colorRipple="@color/colorPrimary"
                 fab:fab_label="Create custom route"
                 fab:fab_size="mini"/>
 
@@ -324,13 +254,13 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="190dp"
-        android:background="@color/colorPrimaryDarker">
+        android:background="@color/colorPrimary">
 
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="20dp"
             android:layout_alignParentTop="true"
-            android:background="@color/colorPrimaryDark">
+            android:background="@color/colorPrimary">
 
             <ImageView
                 android:layout_width="match_parent"
@@ -353,7 +283,7 @@
                 android:layout_marginStart="20dp"
                 android:layout_weight="1"
                 android:text="0km"
-                android:textColor="@color/colorAccent"
+                android:textColor="@color/turqoise"
                 android:textSize="30sp"
                 tools:ignore="HardcodedText"></TextView>
 
@@ -364,7 +294,7 @@
                 android:layout_marginEnd="20dp"
                 android:layout_weight="1"
                 android:text="0min"
-                android:textColor="@color/colorAccent"
+                android:textColor="@color/turqoise"
                 android:textSize="30sp"
                 tools:ignore="HardcodedText"></TextView>
         </LinearLayout>
@@ -376,6 +306,7 @@
             android:layout_alignParentBottom="true"
             android:layout_marginStart="10dp"
             android:layout_marginEnd="10dp"
-            android:layout_marginBottom="10dp" />
+            android:layout_marginBottom="10dp"
+            />
     </RelativeLayout>
 </com.sothree.slidinguppanel.SlidingUpPanelLayout>
