@@ -14,11 +14,11 @@
     <color name="colorPrimaryDark">#FFFFFF</color>
     <color name="colorPrimaryDarkOp">#33FFE0AA</color>
 
-    <color name="colorPrimaryDarker">#D4AE6A</color>
-    <color name="colorPrimaryDarkerOp">#33D4AE6A</color>
-
     <color name="colorAccent">#d7653f</color>
     <color name="textColorHint">#696969</color>
+    <color name="grey">#999999</color>
+    <color name="darkgrey">#666666</color>
+    <color name="ripple">#66FFFFFF</color>
 
     <color name = "yellow">#FFC342</color>
     <color name="orange">#d7653f</color>

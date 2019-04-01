@@ -1,4 +1,4 @@
-package com.example.monica.b_cycle.exceptions;
+package com.example.monica.b_cycle.dialogs;
 
 import android.app.AlertDialog;
 import android.app.Dialog;

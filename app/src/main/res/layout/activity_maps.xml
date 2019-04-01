@@ -4,6 +4,7 @@
     xmlns:fab="http://schemas.android.com/apk/res-auto"
     xmlns:sothree="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/sliding_panel"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:gravity="bottom"
@@ -35,8 +36,7 @@
             android:layout_marginRight="10dp"
             android:background="@color/colorPrimaryDark"
             android:elevation="2dp"
-            android:visibility="gone"
-            >
+            android:visibility="gone">
 
             <AutoCompleteTextView
                 android:id="@+id/input_origin"
@@ -93,8 +93,7 @@
                 android:singleLine="true"
                 android:textColor="@color/textColor"
                 android:textColorHint="@color/textColorHint"
-                android:textSize="15sp"
-                />
+                android:textSize="15sp" />
 
             <ImageView
                 android:id="@+id/expand_button"
@@ -157,9 +156,9 @@
             fab:menu_colorRipple="@color/colorPrimary"
             fab:menu_fab_size="normal"
             fab:menu_icon="@drawable/ic_menu"
-            fab:menu_labels_colorNormal="#999999"
-            fab:menu_labels_colorPressed="#666666"
-            fab:menu_labels_colorRipple="#66FFFFFF"
+            fab:menu_labels_colorNormal="@color/grey"
+            fab:menu_labels_colorPressed="@color/darkgrey"
+            fab:menu_labels_colorRipple="@color/ripple"
             fab:menu_labels_cornerRadius="3dp"
             fab:menu_labels_ellipsize="none"
             fab:menu_labels_hideAnimation="@anim/fab_slide_out_to_left"
@@ -187,51 +186,47 @@
                 android:id="@+id/logout_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:src="@drawable/ic_signout"
                 fab:fab_colorNormal="@color/orange"
                 fab:fab_colorPressed="@color/red"
-                fab:menu_labels_colorRipple="@color/colorPrimary"
                 fab:fab_label="Logout"
                 fab:fab_size="mini"
-                android:src="@drawable/ic_signout"
-                />
+                fab:menu_labels_colorRipple="@color/colorPrimary" />
 
             <com.github.clans.fab.FloatingActionButton
                 android:id="@+id/bike_lanes_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:src="@drawable/ic_bike"
                 fab:fab_colorNormal="@color/turqoise"
                 fab:fab_colorPressed="@color/turqoiseDarker"
                 fab:fab_label="Toggle all bike lanes"
-                fab:fab_size="mini"
-                android:src="@drawable/ic_bike"
-                />
+                fab:fab_size="mini" />
 
             <com.github.clans.fab.FloatingActionButton
                 android:id="@+id/save"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
 
+                android:src="@drawable/ic_save"
+                android:visibility="gone"
                 fab:fab_colorNormal="@color/yellow"
                 fab:fab_colorPressed="@color/orange"
-                fab:menu_labels_colorRipple="@color/colorPrimary"
                 fab:fab_label="Save as bike lane"
                 fab:fab_size="mini"
-                android:visibility="gone"
-                android:src="@drawable/ic_save"
-                />
+                fab:menu_labels_colorRipple="@color/colorPrimary" />
 
             <com.github.clans.fab.FloatingActionButton
                 android:id="@+id/undo"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:src="@drawable/ic_undo"
+                android:visibility="gone"
                 fab:fab_colorNormal="@color/turqoise"
                 fab:fab_colorPressed="@color/turqoiseDarker"
-                fab:menu_labels_colorRipple="@color/colorPrimary"
                 fab:fab_label="Undo"
                 fab:fab_size="mini"
-                android:visibility="gone"
-                android:src="@drawable/ic_undo"
-                />
+                fab:menu_labels_colorRipple="@color/colorPrimary" />
 
             <com.github.clans.fab.FloatingActionButton
                 android:id="@+id/travel_mode_button"
@@ -239,9 +234,9 @@
                 android:layout_height="wrap_content"
                 fab:fab_colorNormal="@color/yellow"
                 fab:fab_colorPressed="@color/orange"
-                fab:menu_labels_colorRipple="#66FFFFFF"
                 fab:fab_label="Get sidewalk route"
-                fab:fab_size="mini" />
+                fab:fab_size="mini"
+                fab:menu_labels_colorRipple="#66FFFFFF" />
 
             <com.github.clans.fab.FloatingActionButton
                 android:id="@+id/custom_route_button"
@@ -255,15 +250,73 @@
                 android:src="@drawable/ic_add"
                 fab:fab_colorNormal="@color/orange"
                 fab:fab_colorPressed="@color/red"
-                fab:menu_labels_colorRipple="@color/colorPrimary"
                 fab:fab_label="Create custom route"
-                fab:fab_size="mini"/>
+                fab:fab_size="mini"
+                fab:menu_labels_colorRipple="@color/colorPrimary" />
 
         </com.github.clans.fab.FloatingActionMenu>
 
+        <!--Route review buttons-->
+        <com.github.clans.fab.FloatingActionButton
+            android:id="@+id/like_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="5dp"
+            android:layout_marginBottom="5dp"
+            android:src="@drawable/ic_thumb_up"
+            fab:fab_colorNormal="@color/turqoise"
+            fab:fab_colorPressed="@color/turqoiseDarker"
+            android:visibility="gone"
+            />
+
+        <com.github.clans.fab.FloatingActionButton
+            android:id="@+id/skip_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="5dp"
+            android:src="@drawable/ic_skip"
+            fab:fab_colorNormal="@color/grey"
+            fab:fab_colorPressed="@color/darkgrey"
+            android:visibility="gone"/>
+
+        <com.github.clans.fab.FloatingActionButton
+            android:id="@+id/dislike_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginEnd="10dp"
+            android:layout_marginStart="5dp"
+            android:layout_marginBottom="5dp"
+            android:src="@drawable/ic_thumb_down"
+            fab:fab_colorNormal="@color/orange"
+            fab:fab_colorPressed="@color/red"
+            android:visibility="gone"/>
+
+        <com.github.clans.fab.FloatingActionButton
+            android:id="@+id/exit_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="5dp"
+            android:layout_marginTop="5dp"
+            android:src="@drawable/ic_close"
+            fab:fab_colorNormal="@color/yellow"
+            fab:fab_colorPressed="@color/orange"
+            android:visibility="gone"
+            />
     </RelativeLayout>
 
+    <!--Bottom slider panel containing elevation graph-->
     <RelativeLayout
+        android:id="@+id/sliding_panel_bar"
         android:layout_width="match_parent"
         android:layout_height="190dp"
         android:background="@color/colorPrimary">
@@ -297,7 +350,7 @@
                 android:text="0km"
                 android:textColor="@color/turqoise"
                 android:textSize="30sp"
-                tools:ignore="HardcodedText"></TextView>
+                tools:ignore="HardcodedText" />
 
             <TextView
                 android:id="@+id/duration"
@@ -308,7 +361,7 @@
                 android:text="0min"
                 android:textColor="@color/turqoise"
                 android:textSize="30sp"
-                tools:ignore="HardcodedText"></TextView>
+                tools:ignore="HardcodedText" />
         </LinearLayout>
 
         <com.jjoe64.graphview.GraphView
@@ -318,7 +371,6 @@
             android:layout_alignParentBottom="true"
             android:layout_marginStart="10dp"
             android:layout_marginEnd="10dp"
-            android:layout_marginBottom="10dp"
-            />
+            android:layout_marginBottom="10dp" />
     </RelativeLayout>
 </com.sothree.slidinguppanel.SlidingUpPanelLayout>

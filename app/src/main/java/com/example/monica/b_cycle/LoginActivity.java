@@ -24,6 +24,8 @@ import com.google.firebase.auth.FirebaseUser;
 
 public class LoginActivity extends AppCompatActivity {
 
+    public static String email;
+
     private EditText mEmailField;
     private EditText mPasswordField;
     private Button mLoginButton;
@@ -51,7 +53,9 @@ public class LoginActivity extends AppCompatActivity {
         super.onStart();
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser != null) {
-            Toast.makeText(LoginActivity.this, "logged in ", Toast.LENGTH_SHORT).show();
+            email = currentUser.getEmail();
+
+            Toast.makeText(LoginActivity.this, "logged in as "+email, Toast.LENGTH_SHORT).show();
             goToMap();
         }
     }
@@ -87,6 +91,7 @@ public class LoginActivity extends AppCompatActivity {
                                 if (task.isSuccessful()) {
                                     Log.d("LOGIN", "signInWithEmail:success");
                                     FirebaseUser user = mAuth.getCurrentUser();
+                                    email = user.getEmail();
                                     goToMap();
                                 } else {
                                     Toast.makeText(LoginActivity.this, "Authentication failed.",
@@ -105,6 +110,7 @@ public class LoginActivity extends AppCompatActivity {
                         .addOnCompleteListener(this, task -> {
                             if (task.isSuccessful()) {
                                 FirebaseUser user = mAuth.getCurrentUser();
+                                email = user.getEmail();
                                 goToMap();
                             } else {
                                 Toast.makeText(LoginActivity.this, "Registration failed.",
