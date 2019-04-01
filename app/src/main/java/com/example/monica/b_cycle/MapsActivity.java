@@ -483,8 +483,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mEditModeButton.setOnClickListener(v -> {
             if (editMode) {
                 editMode = Boolean.FALSE;
-                mExpandButton.setBackgroundResource(R.drawable.ic_expand_down);
-
+                mExpandButton.setImageResource(R.drawable.ic_expand_down);
+                mExpandButton.setClickable(true);
                 if (markers.size() > 1) {
                     moveCamera(destinationLatLng, DEFAULT_ZOOM, true);
                     new ElevationFinder(mRoute, mRouteBuilder).findElevations();
@@ -501,7 +501,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             } else {
                 refreshAllVariables();
                 editMode = Boolean.TRUE;
-                mExpandButton.setBackgroundResource(R.drawable.ic_add_orange);
+                mExpandButton.setImageResource(R.drawable.ic_add_orange);
+                mExpandButton.setClickable(false);
                 mTravelModeButton.setVisibility(View.GONE);
                 mSaveButton.setVisibility(View.VISIBLE);
                 mUndoButton.setVisibility(View.VISIBLE);
