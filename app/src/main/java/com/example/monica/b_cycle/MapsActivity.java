@@ -432,7 +432,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             if (allPartialRoutes.size() > 0) {
                 LatLng lastDestination = markers.get(markers.size() - 2).getPosition();
                 Route routeToBeUndone = allPartialRoutes.get(allPartialRoutes.size() - 1);
+                Log.d("no.points", String.valueOf(mRoute.getPointList().size()));
+                Log.d("no.points", String.valueOf(routeToBeUndone.getPointList().size()));
+
                 mRoute.getPointList().removeAll(routeToBeUndone.getPointList());
+                Log.d("no.points", String.valueOf(mRoute.getPointList().size()));
                 mRoute.setDestination(new SimpleAddress(null, lastDestination));
                 mRoute.getDistance().setValue(mRoute.getDistance().getValue() - routeToBeUndone.getDistance().getValue());
 
@@ -500,6 +504,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 Toast.makeText(MapsActivity.this, "Edit Mode Off", Toast.LENGTH_SHORT).show();
             } else {
                 refreshAllVariables();
+                mRoute = null;
                 editMode = Boolean.TRUE;
                 mExpandButton.setImageResource(R.drawable.ic_add_orange);
                 mExpandButton.setClickable(false);
@@ -702,7 +707,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      * Builds route as per user request.
      */
     private void findPartialDirection() {
-        mRoute = null;
         mSpinner.setVisibility(View.VISIBLE);
         mSpinnerBackground.setVisibility(View.VISIBLE);
 
@@ -941,11 +945,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (mRoute == null) {
             allPartialRoutes.add(partialRoute);
             allCustomRoutePolylines.add(polylines);
-            mRoute = partialRoute;
+            mRoute = new Route(partialRoute);
+            Log.d("no.pointsss", String.valueOf(mRoute.getPointList().size()));
+
         } else {
             allPartialRoutes.add(partialRoute);
             allCustomRoutePolylines.add(polylines);
             mRoute.getPointList().addAll(partialRoute.getPointList());
+            Log.d("no.pointss", String.valueOf(mRoute.getPointList().size()));
+
             mRoute.setDestination(partialRoute.getDestination());
             mRoute.getDistance().setValue(mRoute.getDistance().getValue() + partialRoute.getDistance().getValue());
         }

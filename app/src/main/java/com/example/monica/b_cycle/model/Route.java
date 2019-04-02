@@ -19,6 +19,16 @@ public class Route {
     public Route() {
     }
 
+    public Route(Route route){
+        this.distance = route.getDistance();
+        this.duration = route.getDuration();
+        this.elevationList = route.getElevationList();
+        this.origin = route.getOrigin();
+        this.destination = route.getDestination();
+        this.pointList = route.getPointList();
+        this.travelMode = route.getTravelMode();
+    }
+
     public Route(Distance distance, Duration duration, List<Elevation> elevationList, SimpleAddress origin, SimpleAddress destination, List<LatLng> pointList, TravelMode travelMode) {
         this.distance = distance;
         this.duration = duration;
