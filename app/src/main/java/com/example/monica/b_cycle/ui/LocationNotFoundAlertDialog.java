@@ -1,4 +1,4 @@
-package com.example.monica.b_cycle.dialogs;
+package com.example.monica.b_cycle.ui;
 
 import android.app.AlertDialog;
 import android.app.Dialog;

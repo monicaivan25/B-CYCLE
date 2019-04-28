@@ -11,6 +11,7 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
@@ -18,7 +19,6 @@ import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.KeyEvent;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
@@ -26,13 +26,12 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.AutoCompleteTextView;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.monica.b_cycle.dialogs.LocationNotFoundAlertDialog;
-import com.example.monica.b_cycle.dialogs.NoRouteFoundAlertDialog;
+import com.example.monica.b_cycle.ui.LocationNotFoundAlertDialog;
+import com.example.monica.b_cycle.ui.NoRouteFoundAlertDialog;
 import com.example.monica.b_cycle.exceptions.LocationNotFoundException;
 import com.example.monica.b_cycle.model.PendingRoute;
 import com.example.monica.b_cycle.model.Route;
@@ -43,6 +42,7 @@ import com.example.monica.b_cycle.services.ElevationFinder;
 import com.example.monica.b_cycle.services.PlaceAutocompleteAdapter;
 import com.example.monica.b_cycle.services.RouteBuilder;
 import com.example.monica.b_cycle.services.RouteBuilderListener;
+import com.example.monica.b_cycle.ui.Spinner;
 import com.github.clans.fab.FloatingActionButton;
 import com.github.clans.fab.FloatingActionMenu;
 import com.google.android.gms.common.ConnectionResult;
@@ -50,6 +50,8 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.places.AutocompletePrediction;
 import com.google.android.gms.location.places.GeoDataClient;
@@ -61,6 +63,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
@@ -85,12 +88,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private final String TAG = "MapsActivity";
     private final int LOCATION_PERMISSION_REQUEST_CODE = 1234;
     private final float DEFAULT_ZOOM = 15f;
+    private final float BIKING_MODE_ZOOM = 17f;
+    private final float BIKING_MODE_TILT = 50f;
+
     private final LatLngBounds LAT_LNG_BOUNDS = new LatLngBounds(new LatLng(-40, -168), new LatLng(71, 136));
     private final DatabaseService db = new DatabaseService(this);
 
     private GoogleMap mMap;
     private Boolean mLocationPermissionGranted = false;
-    private Boolean editMode;
+    private Boolean inEditMode;
+    private Boolean inBikingMode;
     private List<Marker> markers;
     private List<Route> allPartialRoutes;
     private List<List<Polyline>> allCustomRoutePolylines;
@@ -106,6 +113,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private FloatingActionButton mSaveButton;
     private FloatingActionButton mUndoButton;
     private FloatingActionButton mLogoutButton;
+    private FloatingActionButton mGoButton;
+
     private FloatingActionMenu mMenu;
 
     private RelativeLayout mOriginLayout;
@@ -118,8 +127,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private Route mRoute;
     private RouteBuilder mRouteBuilder;
 
-    private ProgressBar mSpinner;
-    private View mSpinnerBackground;
+    private Spinner spinner;
     private SlidingUpPanelLayout mSlidingPanel;
     private FloatingActionButton mApproveRouteButton;
     private FloatingActionButton mDisproveRouteButton;
@@ -137,6 +145,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private LatLng originLatLng;
     private LatLng destinationLatLng;
+    private FusedLocationProviderClient mFusedLocationProviderClient;
 
     /**
      * Initializes all elements of map and calls method for permission request.
@@ -147,8 +156,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
-        editMode = Boolean.FALSE;
-
+        inEditMode = Boolean.FALSE;
+        inBikingMode = Boolean.FALSE;
         mOriginLayout = findViewById(R.id.origin_layout);
         mDestinationLayout = findViewById(R.id.destination_layout);
         mOrigin = findViewById(R.id.input_origin);
@@ -163,8 +172,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mGraph = findViewById(R.id.graph);
         mDistance = findViewById(R.id.distance);
         mDuration = findViewById(R.id.duration);
-        mSpinner = findViewById(R.id.progressBar1);
-        mSpinnerBackground = findViewById(R.id.progress_background);
+        spinner = new Spinner(findViewById(R.id.progressBar1), findViewById(R.id.progress_background));
         mTravelMode = TravelMode.DRIVING;
         mSaveButton = findViewById(R.id.save);
         mUndoButton = findViewById(R.id.undo);
@@ -173,10 +181,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mDisproveRouteButton = findViewById(R.id.dislike_button);
         mCloseReviewButton = findViewById(R.id.exit_button);
         mSkipButton = findViewById(R.id.skip_button);
+        mGoButton = findViewById(R.id.go_button);
         mSlidingPanel = findViewById(R.id.sliding_panel);
 
         mMenu = findViewById(R.id.menu);
 
+        mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
         mGeoDataClient = Places.getGeoDataClient(this);
         mPlaceDetectionClient = Places.getPlaceDetectionClient(this);
         mGoogleApiClient = new GoogleApiClient
@@ -188,6 +198,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         getLocationPermission();
         initMap();
     }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+
+        if (mFusedLocationProviderClient != null) {
+            mFusedLocationProviderClient.removeLocationUpdates(
+                    new LocationCallback() {
+                        @Override
+                        public void onLocationResult(LocationResult locationResult) {
+                            getDeviceLocation(true);
+                        }
+                    }
+            );
+        }
+    }
+
 
     /**
      * Manipulates the map once available.
@@ -214,9 +241,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         initGraph();
         initMapAction();
         initReviewLayout();
+        initGoButton();
 
         if (mLocationPermissionGranted) {
-            getDeviceLocation();
+            getDeviceLocation(true);
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
                     && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 return;
@@ -231,6 +259,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      */
     private void applyStyle() {
         mMap.getUiSettings().setMyLocationButtonEnabled(false);
+        mMap.setMyLocationEnabled(true);
 
         try {
             boolean success = mMap.setMapStyle(
@@ -258,6 +287,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         @SuppressLint("ResourceType") View locationButton = mapFragment.getView().findViewById(0x2);
         locationButton.setBackgroundColor(Color.rgb(215, 101, 63));
+
     }
 
     private void addCustomRoutePoint(LatLng latLng) {
@@ -286,14 +316,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             mMenu.close(true);
         });
         mMap.setOnMapLongClickListener(latLng -> {
-            if (editMode) {
-                addCustomRoutePoint(latLng);
-            } else {
-                originLatLng = currentLocationCoordinates;
-                destinationLatLng = latLng;
-                mDestination.setText(latLng.latitude + ", " + latLng.longitude);
-                findDirection(TravelMode.DRIVING);
-            }
+            destinationLatLng = latLng;
+            mDestination.setText(latLng.latitude + ", " + latLng.longitude);
+            validateOrigin();
+            findDirection(TravelMode.DRIVING);
         });
     }
 
@@ -314,11 +340,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     || actionId == EditorInfo.IME_ACTION_DONE
                     || event.getAction() == KeyEvent.ACTION_DOWN
                     || event.getAction() == KeyEvent.KEYCODE_ENTER) {
-                try {
-                    originLatLng = geoLocate();
-                } catch (LocationNotFoundException e) {
-                    Log.d(TAG, "Could not find the inputed originLatLng address.");
-                }
+                validateOrigin();
             }
             return false;
         });
@@ -331,26 +353,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      */
     private void initDestinationBar() {
         mDestination.setOnClickListener(v -> {
+            destinationLatLng = null;
             mDestination.getText().clear();
         });
         mDestination.setOnItemClickListener(mDestinationAutoCompleteClickListener);
         mDestinationAutocompleteAdapter = new PlaceAutocompleteAdapter(this, mGeoDataClient, LAT_LNG_BOUNDS, null);
         mDestination.setAdapter(mDestinationAutocompleteAdapter);
         mDestination.setOnEditorActionListener((v, actionId, event) -> {
-            if (actionId == EditorInfo.IME_ACTION_SEARCH
-                    || actionId == EditorInfo.IME_ACTION_DONE
-                    || event.getAction() == KeyEvent.ACTION_DOWN
-                    || event.getAction() == KeyEvent.KEYCODE_ENTER) {
-                try {
-                    if (editMode) {
-                        addCustomRoutePoint(geoLocate());
-                    } else {
-                        destinationLatLng = geoLocate();
-                        findDirection(mTravelMode);
-                    }
-                } catch (LocationNotFoundException e) {
-                    Log.d(TAG, "Could not find the inputed destinationLatLng address.");
-                }
+            if (actionId == EditorInfo.IME_ACTION_SEARCH || actionId == EditorInfo.IME_ACTION_DONE
+                    || event.getAction() == KeyEvent.ACTION_DOWN || event.getAction() == KeyEvent.KEYCODE_ENTER) {
+                validateOrigin();
+                validateDestination();
+                findDirection(mTravelMode);
             }
             return false;
         });
@@ -360,9 +374,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      * Sets on click listeners for the GPS button.
      */
     private void initGpsButton() {
-        mGpsButton.setOnClickListener(v -> getDeviceLocation());
+        mGpsButton.setOnClickListener(v -> getDeviceLocation(true));
         mGpsButton.setOnLongClickListener(v -> {
-            getDeviceLocation();
+            getDeviceLocation(true);
             originLatLng = currentLocationCoordinates;
             mOrigin.setText("My Location");
             return true;
@@ -374,28 +388,35 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      */
     private void initSearchButton() {
         mSearchButton.setOnClickListener(v -> {
-            if (originLatLng == null) {
-                try {
-                    originLatLng = geoLocate();
-                } catch (LocationNotFoundException e) {
-                    Log.d(TAG, "Could not find the inputed origin address.");
-                }
-            }
-            if (destinationLatLng == null) {
-                try {
-                    destinationLatLng = geoLocate();
-                } catch (LocationNotFoundException e) {
-                    Log.d(TAG, "Could not find the inputed destination address.");
-                }
-            }
-            if (originLatLng != null && destinationLatLng != null) {
-                if (editMode) {
-                    addCustomRoutePoint(destinationLatLng);
-                }
-                findDirection(mTravelMode);
-                hideKeyboard();
-            }
+            validateOrigin();
+            validateDestination();
+            findDirection(mTravelMode);
+            hideKeyboard();
         });
+    }
+
+    private void validateOrigin() {
+        if (mOrigin.getText() == null || mOrigin.getText().toString().equals("My Location") || mOrigin.getText().toString().equals("")) {
+            getDeviceLocation(false);
+            originLatLng = currentLocationCoordinates;
+        } else {
+            try {
+                originLatLng = geoLocate(mOrigin.getText().toString());
+            } catch (LocationNotFoundException e) {
+                Log.d(TAG, "Could not find the inputed origin address.");
+            }
+        }
+
+    }
+
+    private void validateDestination() {
+        if (destinationLatLng == null) {
+            try {
+                destinationLatLng = geoLocate(mDestination.getText().toString());
+            } catch (LocationNotFoundException e) {
+                Log.d(TAG, "Could not find the inputed destination address.");
+            }
+        }
     }
 
     /**
@@ -421,6 +442,67 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private void initSaveButton() {
         mSaveButton.setOnClickListener(v -> {
             db.addToDatabase(mRoute);
+        });
+    }
+
+
+    private void initGoButton() {
+        final int DISTANCE_TOLERANCE = 10;
+        mGoButton.setOnClickListener(v -> {
+            Handler handler = new Handler();
+            int delay = 1000 * 3;
+            final float firstBearing = getBearing(currentLocationCoordinates, mRoute.getPointList().get(0));
+            final float[] firstDistance = new float[1];
+            Location.distanceBetween(currentLocationCoordinates.latitude, currentLocationCoordinates.longitude,
+                    mRoute.getPointList().get(mRoute.getPointList().size() - 1).latitude, mRoute.getPointList().get(mRoute.getPointList().size() - 1).longitude,
+                    firstDistance);
+            Runnable runnable = new Runnable() {
+                int index = 0;
+                LatLng point = mRoute.getPointList().get(index);
+                float lastBearing = firstBearing;
+                float[] lastDistance = firstDistance;
+                float bearing = getBearing(currentLocationCoordinates, point);
+
+                public void run() {
+                    getDeviceLocation(false);
+                    float[] distance = new float[1];
+                    Location.distanceBetween(currentLocationCoordinates.latitude, currentLocationCoordinates.longitude,
+                            mRoute.getPointList().get(mRoute.getPointList().size() - 1).latitude, mRoute.getPointList().get(mRoute.getPointList().size() - 1).longitude,
+                            distance);
+                    if ((int) bearing != (int) lastBearing && distance[0] - DISTANCE_TOLERANCE <= lastDistance[0]) {
+                        index++;
+                        try {
+                            point = mRoute.getPointList().get(index);
+                            bearing = getBearing(currentLocationCoordinates, point);
+                        } catch (IndexOutOfBoundsException e) {
+                            e.printStackTrace();
+                            handler.removeCallbacks(this);
+                        }
+                    }
+                    lastBearing = bearing;
+                    lastDistance[0] = distance[0];
+                    if (inBikingMode) {
+                        animateCameraWithZoomBearingAndTilt(BIKING_MODE_ZOOM, bearing, BIKING_MODE_TILT);
+                        handler.postDelayed(this, delay);
+                    }
+                }
+            };
+            if (!inBikingMode) {
+                animateCameraWithZoomBearingAndTilt(BIKING_MODE_ZOOM, firstBearing, BIKING_MODE_TILT);
+                handler.postDelayed(runnable, delay);
+
+                mGoButton.setImageResource(R.drawable.ic_close);
+                inBikingMode = Boolean.TRUE;
+                setSimpleLayout();
+            } else {
+                mMap.clear();
+                animateCameraWithZoomBearingAndTilt(DEFAULT_ZOOM, 0, 0);
+                mGoButton.setImageResource(R.drawable.ic_arrow_forward);
+                mGoButton.setVisibility(View.GONE);
+
+                inBikingMode = Boolean.FALSE;
+                setNormalLayout();
+            }
         });
     }
 
@@ -485,8 +567,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private void initEditModeButton() {
         mEditModeButton.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_add));
         mEditModeButton.setOnClickListener(v -> {
-            if (editMode) {
-                editMode = Boolean.FALSE;
+            if (inEditMode) {
+                inEditMode = Boolean.FALSE;
                 mExpandButton.setImageResource(R.drawable.ic_expand_down);
                 mExpandButton.setClickable(true);
                 if (markers.size() > 1) {
@@ -500,12 +582,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 mUndoButton.setVisibility(View.GONE);
                 mEditModeButton.setLabelText("Create custom route");
                 mEditModeButton.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_add));
-
+                mGoButton.setVisibility(View.VISIBLE);
                 Toast.makeText(MapsActivity.this, "Edit Mode Off", Toast.LENGTH_SHORT).show();
             } else {
                 refreshAllVariables();
-                mRoute = null;
-                editMode = Boolean.TRUE;
+                inEditMode = Boolean.TRUE;
                 mExpandButton.setImageResource(R.drawable.ic_add_orange);
                 mExpandButton.setClickable(false);
                 mTravelModeButton.setVisibility(View.GONE);
@@ -535,9 +616,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 mTravelModeButton.setLabelText("Get road route");
                 mTravelModeButton.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_car));
             }
-            if (originLatLng != null && destinationLatLng != null) {
-                findDirection(mTravelMode);
-            }
+            validateOrigin();
+            validateDestination();
+            findDirection(mTravelMode);
             mMenu.close(false);
         });
     }
@@ -633,20 +714,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      * If the user granted permission to his location, then it zooms in on his location.
      * If task was unsuccessful or permission was not granted, it notifies the user through a Toast.
      */
-    public void getDeviceLocation() {
-        FusedLocationProviderClient mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+    public void getDeviceLocation(boolean moveCamera) {
         try {
             if (mLocationPermissionGranted) {
                 Task location = mFusedLocationProviderClient.getLastLocation();
                 location.addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        mMap.setMyLocationEnabled(true);
                         Location currentLocation = (Location) task.getResult();
                         currentLocationCoordinates = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
                         if (originLatLng == null) {
                             originLatLng = currentLocationCoordinates;
                         }
-                        moveCamera(currentLocationCoordinates, DEFAULT_ZOOM, false);
+                        if (moveCamera) {
+                            moveCamera(currentLocationCoordinates, DEFAULT_ZOOM, false);
+                        }
                     } else {
                         notifyUser("Unable to get current location");
                     }
@@ -663,12 +744,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      * Geolocates and moves camera to the first address found
      * that matches the text in the search bar.
      */
-    private LatLng geoLocate() {
+    private LatLng geoLocate(String inputedText) {
         Geocoder geocoder = new Geocoder(MapsActivity.this);
         List<Address> list = new ArrayList<>();
 
         try {
-            list = geocoder.getFromLocationName(mDestination.getText().toString(), 1);
+            list = geocoder.getFromLocationName(inputedText, 1);
         } catch (IOException e) {
             Log.e(TAG, "geoLocate: IOException: " + e.getMessage());
         }
@@ -691,8 +772,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private void findDirection(TravelMode travelMode) {
         mMap.clear();
         mRoute = null;
-        mSpinner.setVisibility(View.VISIBLE);
-        mSpinnerBackground.setVisibility(View.VISIBLE);
+
+        spinner.start();
+        mGoButton.setVisibility(View.VISIBLE);
+
+        if (inEditMode) {
+            addCustomRoutePoint(destinationLatLng);
+        }
 
         new RouteBuilder(originLatLng, destinationLatLng, mMap, mGraph, mDistance, mDuration, this, travelMode, Boolean.FALSE);
         mMap.addMarker(new MarkerOptions()
@@ -707,9 +793,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      * Builds route as per user request.
      */
     private void findPartialDirection() {
-        mSpinner.setVisibility(View.VISIBLE);
-        mSpinnerBackground.setVisibility(View.VISIBLE);
-
+        spinner.start();
         mRouteBuilder = new RouteBuilder(originLatLng, destinationLatLng, mMap, mGraph, mDistance, mDuration, this, TravelMode.WALKING, Boolean.TRUE);
     }
     /*----------------------------------LOCATION AUTOCOMPLETE----------------------------------*/
@@ -768,14 +852,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             Log.d(TAG, "onResult: " + places.getStatus().toString());
             places.release();
         } else {
-            if (editMode) {
-                addCustomRoutePoint(places.get(0).getLatLng());
-            } else {
-                destinationLatLng = places.get(0).getLatLng();
-                places.release();
-
-                findDirection(mTravelMode);
-            }
+            destinationLatLng = places.get(0).getLatLng();
+            places.release();
+            validateOrigin();
+            findDirection(mTravelMode);
         }
     };
 
@@ -852,23 +932,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         .getDisplayMetrics());
     }
 
-    private void stopSpinner() {
-        mSpinner.setVisibility(View.GONE);
-        mSpinnerBackground.setVisibility(View.GONE);
-    }
-
+    /**
+     * Starts the bike lanes review for all pending routes.
+     *
+     * @param pendingRoutes
+     */
     public void startReview(List<PendingRoute> pendingRoutes) {
-        mDestinationLayout.setVisibility(View.GONE);
-        mMenu.setVisibility(View.GONE);
-        mSlidingPanel.setTouchEnabled(false);
-        mSkipButton.setVisibility(View.VISIBLE);
-        mCloseReviewButton.setVisibility(View.VISIBLE);
-        mApproveRouteButton.setVisibility(View.VISIBLE);
-        mDisproveRouteButton.setVisibility(View.VISIBLE);
+        setReviewLayout();
         this.pendingRoutes = pendingRoutes;
         drawRoute(pendingRoutes.get(0));
     }
 
+    /**
+     * Draws out a bike lane route pending approval.
+     *
+     * @param pendingRoute
+     */
     public void drawRoute(PendingRoute pendingRoute) {
         mMap.clear();
         mMap.addPolyline(new PolylineOptions()
@@ -884,9 +963,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     /*----------------------------------OVERRIDDEN INTERFACE METHODS----------------------------------*/
 
     /**
-     * Method overridden from FragmentActivity
+     * Method overridden from FragmentActivity.
      * Checks if the request code corresponds to the LOCATION_PERMISSION_REQUEST_CODE and checks if permission for
-     * said code has been granted. If so, it calls getDeviceLocation()
+     * said code has been granted. If so, it retreives the device's location.
      *
      * @param requestCode
      * @param permissions
@@ -897,7 +976,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE && grantResults.length > 0) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 mLocationPermissionGranted = true;
-                getDeviceLocation();
+                getDeviceLocation(true);
             }
         }
     }
@@ -912,50 +991,122 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Log.e(TAG, "Connection Failed: " + connectionResult.getErrorMessage());
     }
 
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        return super.onTouchEvent(event);
-    }
+//    @Override
+//    public boolean onTouchEvent(MotionEvent event) {
+//        return super.onTouchEvent(event);
+//    }
 
     /**
-     * Method Overridden from RouteBuilderListener interface
+     * Method Overridden from RouteBuilderListener interface.
      */
     @Override
     public void onFinish(Route finalRoute) {
-        stopSpinner();
+        spinner.stop();
         mRoute = finalRoute;
     }
 
     /**
-     * Method Overridden from RouteBuilderListener interface
+     * Method Overridden from RouteBuilderListener interface.
+     * Pops a NoRouteAlertFoundDialog.
      */
     @Override
     public void onRouteNotFound() {
         NoRouteFoundAlertDialog dialog = new NoRouteFoundAlertDialog();
         dialog.show(getSupportFragmentManager(), "No route found.");
-        stopSpinner();
+        spinner.stop();
     }
 
     /**
-     * Method Overridden from RouteBuilderListener interface
+     * Method Overridden from RouteBuilderListener interface.
+     * Adds the partialRoute Route object to the main, mRoute object.
      */
     @Override
     public void onPartialRouteFound(Route partialRoute, List<Polyline> polylines) {
-        stopSpinner();
+        spinner.stop();
         if (mRoute == null) {
             allPartialRoutes.add(partialRoute);
             allCustomRoutePolylines.add(polylines);
             mRoute = new Route(partialRoute);
-            Log.d("no.pointsss", String.valueOf(mRoute.getPointList().size()));
 
         } else {
             allPartialRoutes.add(partialRoute);
             allCustomRoutePolylines.add(polylines);
             mRoute.getPointList().addAll(partialRoute.getPointList());
-            Log.d("no.pointss", String.valueOf(mRoute.getPointList().size()));
 
             mRoute.setDestination(partialRoute.getDestination());
             mRoute.getDistance().setValue(mRoute.getDistance().getValue() + partialRoute.getDistance().getValue());
         }
+    }
+
+    /**
+     * Changes the Activity Layout for review mode.
+     * Clears the menu and the destination layout. Disables the sliding panel.
+     * Shows Approve, Disprove, Skip and CloseReview buttons.
+     */
+    private void setReviewLayout() {
+        mDestinationLayout.setVisibility(View.GONE);
+        mMenu.setVisibility(View.GONE);
+        mSlidingPanel.setTouchEnabled(false);
+        mSkipButton.setVisibility(View.VISIBLE);
+        mCloseReviewButton.setVisibility(View.VISIBLE);
+        mApproveRouteButton.setVisibility(View.VISIBLE);
+        mDisproveRouteButton.setVisibility(View.VISIBLE);
+    }
+
+    /**
+     * Changes the Activity Layout for biking mode.
+     * Clears everything apart from the route, current location and the cancel button.
+     */
+    private void setSimpleLayout() {
+        mMenu.close(false);
+        mMenu.setVisibility(View.GONE);
+        mDestinationLayout.setVisibility(View.GONE);
+        mExpandButton.setImageResource(R.drawable.ic_expand_down);
+        setMargins(mDestinationLayout, 10, 10, 10, 0);
+        mOriginLayout.setVisibility(View.GONE);
+    }
+
+    /**
+     * Changes the Activity Layout back to normal.
+     * Normal layout contains destination layout and menu.
+     */
+    private void setNormalLayout() {
+        mMenu.setVisibility(View.VISIBLE);
+        mDestinationLayout.setVisibility(View.VISIBLE);
+    }
+
+    /**
+     * Calculates bearing between two LatLng objects and returns a float
+     *
+     * @param pointA
+     * @param pointB
+     * @return bearing
+     */
+    private float getBearing(LatLng pointA, LatLng pointB) {
+        double x = Math.cos(pointB.latitude) * Math.sin(pointB.longitude - pointA.longitude);
+        double y = Math.cos(pointA.latitude) * Math.sin(pointB.latitude) - Math.sin(pointA.latitude) * Math.cos(pointB.latitude) * Math.cos(pointB.longitude - pointA.longitude);
+        return (float) (Math.toDegrees(Math.atan2(y, x)) + 360) % 360;
+    }
+
+    /**
+     * Animates the camera using the three parameters.
+     *
+     * @param zoom
+     * @param bearing
+     * @param tilt
+     */
+    private void animateCameraWithZoomBearingAndTilt(float zoom, float bearing, float tilt) {
+        CameraPosition camPos = CameraPosition.builder()
+                .target(currentLocationCoordinates)
+                .zoom(zoom)
+                .bearing(bearing)
+                .tilt(tilt)
+                .build();
+        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(camPos));
+    }
+
+    @Override
+    public void onBackPressed() {
+        moveTaskToBack(true);
     }
 }

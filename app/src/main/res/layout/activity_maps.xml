@@ -256,6 +256,20 @@
 
         </com.github.clans.fab.FloatingActionMenu>
 
+        <com.github.clans.fab.FloatingActionButton
+            android:id="@+id/go_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginEnd="10dp"
+            android:layout_marginStart="5dp"
+            android:layout_marginBottom="5dp"
+            android:src="@drawable/ic_arrow_forward"
+            fab:fab_colorNormal="@color/turqoise"
+            fab:fab_colorPressed="@color/turqoiseDarker"
+            android:visibility="gone"/>
+
         <!--Route review buttons-->
         <com.github.clans.fab.FloatingActionButton
             android:id="@+id/like_button"
