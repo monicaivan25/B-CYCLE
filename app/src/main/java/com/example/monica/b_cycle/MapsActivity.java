@@ -30,6 +30,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.monica.b_cycle.services.LocationUtils;
 import com.example.monica.b_cycle.ui.LocationNotFoundAlertDialog;
 import com.example.monica.b_cycle.ui.NoRouteFoundAlertDialog;
 import com.example.monica.b_cycle.exceptions.LocationNotFoundException;
@@ -290,24 +291,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
-    private void addCustomRoutePoint(LatLng latLng) {
-        if (originLatLng == null) {
-            originLatLng = latLng;
-            mMap.addMarker(new MarkerOptions()
-                    .position(latLng)
-                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)));
-        } else {
-            if (destinationLatLng != null) {
-                originLatLng = destinationLatLng;
-            }
-            destinationLatLng = latLng;
-            findPartialDirection();
-        }
-        markers.add(mMap.addMarker(new MarkerOptions()
-                .position(latLng)
-                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE))));
-    }
-
     /**
      * Initialises onMapLongClickListener
      */
@@ -316,10 +299,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             mMenu.close(true);
         });
         mMap.setOnMapLongClickListener(latLng -> {
+            originLatLng = destinationLatLng;
             destinationLatLng = latLng;
             mDestination.setText(latLng.latitude + ", " + latLng.longitude);
-            validateOrigin();
-            findDirection(TravelMode.DRIVING);
+            if (inEditMode) {
+                findPartialDirection();
+            } else {
+                validateOrigin();
+                findDirection(mTravelMode);
+            }
         });
     }
 
@@ -447,52 +435,45 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
     private void initGoButton() {
-        final int DISTANCE_TOLERANCE = 10;
+        final int DISTANCE_TOLERANCE_IN_METERS = 84;
+        final int BEARING_TOLERANCE = 3;
         mGoButton.setOnClickListener(v -> {
             Handler handler = new Handler();
             int delay = 1000 * 3;
             final float firstBearing = getBearing(currentLocationCoordinates, mRoute.getPointList().get(0));
-            final float[] firstDistance = new float[1];
-            Location.distanceBetween(currentLocationCoordinates.latitude, currentLocationCoordinates.longitude,
-                    mRoute.getPointList().get(mRoute.getPointList().size() - 1).latitude, mRoute.getPointList().get(mRoute.getPointList().size() - 1).longitude,
-                    firstDistance);
             Runnable runnable = new Runnable() {
                 int index = 0;
                 LatLng point = mRoute.getPointList().get(index);
                 float lastBearing = firstBearing;
-                float[] lastDistance = firstDistance;
-                float bearing = getBearing(currentLocationCoordinates, point);
+                boolean routePointsDone = false;
 
                 public void run() {
                     getDeviceLocation(false);
-                    float[] distance = new float[1];
-                    Location.distanceBetween(currentLocationCoordinates.latitude, currentLocationCoordinates.longitude,
-                            mRoute.getPointList().get(mRoute.getPointList().size() - 1).latitude, mRoute.getPointList().get(mRoute.getPointList().size() - 1).longitude,
-                            distance);
-                    if ((int) bearing != (int) lastBearing && distance[0] - DISTANCE_TOLERANCE <= lastDistance[0]) {
-                        index++;
+                    float distanceToPoint = getDistanceBetween(currentLocationCoordinates, point);
+                    float bearingToPoint = getBearing(currentLocationCoordinates, point);
+                    if ((Math.abs(bearingToPoint - lastBearing) > BEARING_TOLERANCE)
+                            && (distanceToPoint <= DISTANCE_TOLERANCE_IN_METERS)) {
                         try {
-                            point = mRoute.getPointList().get(index);
-                            bearing = getBearing(currentLocationCoordinates, point);
+                            point = mRoute.getPointList().get(index++);
+                            lastBearing = bearingToPoint;
                         } catch (IndexOutOfBoundsException e) {
-                            e.printStackTrace();
-                            handler.removeCallbacks(this);
+                            routePointsDone = true;
                         }
                     }
-                    lastBearing = bearing;
-                    lastDistance[0] = distance[0];
-                    if (inBikingMode) {
-                        animateCameraWithZoomBearingAndTilt(BIKING_MODE_ZOOM, bearing, BIKING_MODE_TILT);
+                    if (inBikingMode && !routePointsDone) {
+                        animateCameraWithZoomBearingAndTilt(BIKING_MODE_ZOOM, bearingToPoint, BIKING_MODE_TILT);
                         handler.postDelayed(this, delay);
                     }
                 }
             };
             if (!inBikingMode) {
+                inBikingMode = Boolean.TRUE;
+
                 animateCameraWithZoomBearingAndTilt(BIKING_MODE_ZOOM, firstBearing, BIKING_MODE_TILT);
+                LocationUtils.expandPath(mRoute, DISTANCE_TOLERANCE_IN_METERS);
                 handler.postDelayed(runnable, delay);
 
                 mGoButton.setImageResource(R.drawable.ic_close);
-                inBikingMode = Boolean.TRUE;
                 setSimpleLayout();
             } else {
                 mMap.clear();
@@ -577,23 +558,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
 
                 markers.forEach(Marker::remove);
-                mTravelModeButton.setVisibility(View.VISIBLE);
-                mSaveButton.setVisibility(View.GONE);
-                mUndoButton.setVisibility(View.GONE);
-                mEditModeButton.setLabelText("Create custom route");
-                mEditModeButton.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_add));
-                mGoButton.setVisibility(View.VISIBLE);
+                setMenuNormalLayout();
+                if (mRoute != null) {
+                    mGoButton.setVisibility(View.VISIBLE);
+                }
                 Toast.makeText(MapsActivity.this, "Edit Mode Off", Toast.LENGTH_SHORT).show();
             } else {
                 refreshAllVariables();
                 inEditMode = Boolean.TRUE;
-                mExpandButton.setImageResource(R.drawable.ic_add_orange);
-                mExpandButton.setClickable(false);
-                mTravelModeButton.setVisibility(View.GONE);
-                mSaveButton.setVisibility(View.VISIBLE);
-                mUndoButton.setVisibility(View.VISIBLE);
-                mEditModeButton.setLabelText("Done");
-                mEditModeButton.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_done));
+                setMenuEditModeLayout();
+                mGoButton.setVisibility(View.GONE);
                 Toast.makeText(MapsActivity.this, "Edit Mode On", Toast.LENGTH_SHORT).show();
             }
             mRoute = null;
@@ -616,9 +590,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 mTravelModeButton.setLabelText("Get road route");
                 mTravelModeButton.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_car));
             }
-            validateOrigin();
-            validateDestination();
-            findDirection(mTravelMode);
+            if (mRoute != null) {
+                validateOrigin();
+                validateDestination();
+                findDirection(mTravelMode);
+            }
             mMenu.close(false);
         });
     }
@@ -770,16 +746,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      * Builds route as per user request.
      */
     private void findDirection(TravelMode travelMode) {
-        mMap.clear();
-        mRoute = null;
-
         spinner.start();
         mGoButton.setVisibility(View.VISIBLE);
 
-        if (inEditMode) {
-            addCustomRoutePoint(destinationLatLng);
-        }
-
+        mMap.clear();
+        mRoute = null;
         new RouteBuilder(originLatLng, destinationLatLng, mMap, mGraph, mDistance, mDuration, this, travelMode, Boolean.FALSE);
         mMap.addMarker(new MarkerOptions()
                 .position(originLatLng)
@@ -794,7 +765,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      */
     private void findPartialDirection() {
         spinner.start();
-        mRouteBuilder = new RouteBuilder(originLatLng, destinationLatLng, mMap, mGraph, mDistance, mDuration, this, TravelMode.WALKING, Boolean.TRUE);
+        markers.add(mMap.addMarker(new MarkerOptions()
+                .position(destinationLatLng)
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE))));
+        if (originLatLng != null) {
+            mRouteBuilder = new RouteBuilder(originLatLng, destinationLatLng, mMap, mGraph, mDistance, mDuration, this, TravelMode.WALKING, Boolean.TRUE);
+        } else {
+            spinner.stop();
+        }
     }
     /*----------------------------------LOCATION AUTOCOMPLETE----------------------------------*/
 
@@ -1073,6 +1051,25 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private void setNormalLayout() {
         mMenu.setVisibility(View.VISIBLE);
         mDestinationLayout.setVisibility(View.VISIBLE);
+        setMenuNormalLayout();
+    }
+
+    private void setMenuNormalLayout() {
+        mTravelModeButton.setVisibility(View.VISIBLE);
+        mSaveButton.setVisibility(View.GONE);
+        mUndoButton.setVisibility(View.GONE);
+        mEditModeButton.setLabelText("Create custom route");
+        mEditModeButton.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_add));
+    }
+
+    private void setMenuEditModeLayout() {
+        mExpandButton.setImageResource(R.drawable.ic_add_orange);
+        mExpandButton.setClickable(false);
+        mTravelModeButton.setVisibility(View.GONE);
+        mSaveButton.setVisibility(View.VISIBLE);
+        mUndoButton.setVisibility(View.VISIBLE);
+        mEditModeButton.setLabelText("Done");
+        mEditModeButton.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_done));
     }
 
     /**
@@ -1085,7 +1082,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private float getBearing(LatLng pointA, LatLng pointB) {
         double x = Math.cos(pointB.latitude) * Math.sin(pointB.longitude - pointA.longitude);
         double y = Math.cos(pointA.latitude) * Math.sin(pointB.latitude) - Math.sin(pointA.latitude) * Math.cos(pointB.latitude) * Math.cos(pointB.longitude - pointA.longitude);
-        return (float) (Math.toDegrees(Math.atan2(y, x)) + 360) % 360;
+        return (float) Math.toDegrees(Math.atan2(y, x)) % 360f - 90f;
     }
 
     /**
@@ -1103,6 +1100,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .tilt(tilt)
                 .build();
         mMap.animateCamera(CameraUpdateFactory.newCameraPosition(camPos));
+    }
+
+    private float getDistanceBetween(LatLng pointA, LatLng pointB) {
+        float[] distanceToPoint = new float[1];
+        Location.distanceBetween(pointA.latitude, pointA.longitude,
+                pointB.latitude, pointB.longitude, distanceToPoint);
+        return distanceToPoint[0];
     }
 
     @Override

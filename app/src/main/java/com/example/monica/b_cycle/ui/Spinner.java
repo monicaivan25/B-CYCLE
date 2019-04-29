@@ -5,46 +5,46 @@ import android.widget.ProgressBar;
 
 public class Spinner {
 
-    private ProgressBar mSpinner;
-    private View mSpinnerBackground;
+    private ProgressBar circleProgressBar;
+    private View spinnerBackground;
 
     public Spinner() {
     }
 
-    public Spinner(ProgressBar mSpinner, View mSpinnerBackground) {
-        this.mSpinner = mSpinner;
-        this.mSpinnerBackground = mSpinnerBackground;
+    public Spinner(ProgressBar circleProgressBar, View spinnerBackground) {
+        this.circleProgressBar = circleProgressBar;
+        this.spinnerBackground = spinnerBackground;
     }
 
     /**
-     * Starts the progress spinner.
+     * Starts the progress circleProgressBar.
      */
     public void start(){
-        mSpinner.setVisibility(View.VISIBLE);
-        mSpinnerBackground.setVisibility(View.VISIBLE);
+        circleProgressBar.setVisibility(View.VISIBLE);
+        spinnerBackground.setVisibility(View.VISIBLE);
     }
 
     /**
-     * Stops the progress spinner.
+     * Stops the progress circleProgressBar.
      */
     public void stop() {
-        mSpinner.setVisibility(View.GONE);
-        mSpinnerBackground.setVisibility(View.GONE);
+        circleProgressBar.setVisibility(View.GONE);
+        spinnerBackground.setVisibility(View.GONE);
     }
 
-    public ProgressBar getmSpinner() {
-        return mSpinner;
+    public ProgressBar getCircleProgressBar() {
+        return circleProgressBar;
     }
 
-    public void setmSpinner(ProgressBar mSpinner) {
-        this.mSpinner = mSpinner;
+    public void setCircleProgressBar(ProgressBar circleProgressBar) {
+        this.circleProgressBar = circleProgressBar;
     }
 
-    public View getmSpinnerBackground() {
-        return mSpinnerBackground;
+    public View getSpinnerBackground() {
+        return spinnerBackground;
     }
 
-    public void setmSpinnerBackground(View mSpinnerBackground) {
-        this.mSpinnerBackground = mSpinnerBackground;
+    public void setSpinnerBackground(View spinnerBackground) {
+        this.spinnerBackground = spinnerBackground;
     }
 }

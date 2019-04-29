@@ -98,14 +98,6 @@ public class DatabaseService {
         });
     }
 
-
-    private LatLng getNewPointBetweenAAndB(LatLng pointA, LatLng pointB, float distance) {
-        LatLng vector = new LatLng((float) (pointB.latitude - pointA.latitude) / distance, (float) (pointB.longitude - pointA.longitude) / distance);
-        LatLng pointC = new LatLng(pointA.latitude + vector.latitude * MIN_DISTANCE_IN_METERS, pointA.longitude + vector.longitude * MIN_DISTANCE_IN_METERS);
-        return pointC;
-    }
-
-
     public void startReview() {
 
         boolean thereAreRoutesByOtherUsers = pendingRouteDaos.stream()
@@ -140,32 +132,13 @@ public class DatabaseService {
     }
 
     /**
-     * Adds more points, at a constant distance, to the route to be saved
-     *
-     * @param route
-     */
-    private void expandPath(Route route) {
-        List<LatLng> pointList = route.getPointList();
-        for (int i = 0; i < pointList.size() - 1; i++) {
-            float distance[] = new float[1];
-            LatLng pointA = pointList.get(i);
-            LatLng pointB = pointList.get(i + 1);
-            Location.distanceBetween(pointA.latitude, pointA.longitude,
-                    pointB.latitude, pointB.longitude, distance);
-            if (distance[0] > MIN_DISTANCE_IN_METERS) {
-                pointList.add(i + 1, getNewPointBetweenAAndB(pointA, pointB, distance[0]));
-            }
-        }
-    }
-
-    /**
      * Saves the given Route object to the database
      *
      * @param route
      */
     public void addToDatabase(Route route) {
         DatabaseReference newRouteRef = mRootRef.child("pending").push();
-        expandPath(route);
+        LocationUtils.expandPath(route, 100);
 //        newRouteRef.setValue(route);
         newRouteRef.setValue(new PendingRouteDao(LoginActivity.email, LoginActivity.email, mapper.map(route)));
     }
