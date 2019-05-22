@@ -6,4 +6,10 @@ public interface Finder {
      * @param data the JSON as a String
      */
     void parseJson(String data);
+
+    /**
+     * Creates the URL needed to call in order to obtain the json data
+     * @return the URL concatenated with API key
+     */
+    String createURL();
 }

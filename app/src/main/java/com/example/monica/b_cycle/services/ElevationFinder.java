@@ -46,12 +46,8 @@ public class ElevationFinder implements Finder {
         return essentialPoints;
     }
 
-    /**
-     * Creates the URL needed to call in order to obtain directions
-     *
-     * @return the URL concatenated with origin, destination, mode and API key
-     */
-    private String createURL() {
+    @Override
+    public String createURL() {
         StringBuilder points = new StringBuilder();
         essentialPoints.forEach(point -> {
             points.append(point.latitude).append(",").append(point.longitude).append("|");

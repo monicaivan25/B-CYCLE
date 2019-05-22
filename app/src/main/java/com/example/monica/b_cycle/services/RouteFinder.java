@@ -33,11 +33,8 @@ class RouteFinder implements Finder {
         this.routeFinderListener = routeFinderListener;
     }
 
-    /**
-     * Creates the URL needed to call in order to obtain directions
-     * @return the URL concatenated with origin, destination, mode and API key
-     */
-    private String createURL(){
+   @Override
+    public String createURL(){
         return DIRECTIONS_URL
                 + "origin=" + String.valueOf(origin.latitude) + "," + String.valueOf(origin.longitude)
                 + "&destination=" + String.valueOf(destination.latitude) + "," + String.valueOf(destination.longitude)

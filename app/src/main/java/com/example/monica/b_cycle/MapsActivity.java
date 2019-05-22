@@ -51,8 +51,6 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationCallback;
-import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.places.AutocompletePrediction;
 import com.google.android.gms.location.places.GeoDataClient;
@@ -200,21 +198,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         initMap();
     }
 
-    @Override
-    public void onPause() {
-        super.onPause();
-
-        if (mFusedLocationProviderClient != null) {
-            mFusedLocationProviderClient.removeLocationUpdates(
-                    new LocationCallback() {
-                        @Override
-                        public void onLocationResult(LocationResult locationResult) {
-                            getDeviceLocation(true);
-                        }
-                    }
-            );
-        }
-    }
+//    public void onPause() {
+//        super.onPause();
+//
+//        if (mFusedLocationProviderClient != null) {
+//            mFusedLocationProviderClient.removeLocationUpdates(
+//                    new LocationCallback() {
+//                        @Override
+//                        public void onLocationResult(LocationResult locationResult) {
+//                            getDeviceLocation(true);
+//                        }
+//                    }
+//            );
+//        }
+//    }
 
 
     /**
@@ -225,7 +222,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-//        mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
 
         applyStyle();
         initOriginBar();
@@ -299,13 +295,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             mMenu.close(true);
         });
         mMap.setOnMapLongClickListener(latLng -> {
-            originLatLng = destinationLatLng;
-            destinationLatLng = latLng;
             mDestination.setText(latLng.latitude + ", " + latLng.longitude);
             if (inEditMode) {
+                originLatLng = destinationLatLng;
+                destinationLatLng = latLng;
                 findPartialDirection();
             } else {
                 validateOrigin();
+                destinationLatLng = latLng;
                 findDirection(mTravelMode);
             }
         });
@@ -341,6 +338,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      */
     private void initDestinationBar() {
         mDestination.setOnClickListener(v -> {
+            if(inEditMode){
+                originLatLng = destinationLatLng;
+            }
             destinationLatLng = null;
             mDestination.getText().clear();
         });
@@ -350,9 +350,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mDestination.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_SEARCH || actionId == EditorInfo.IME_ACTION_DONE
                     || event.getAction() == KeyEvent.ACTION_DOWN || event.getAction() == KeyEvent.KEYCODE_ENTER) {
-                validateOrigin();
+
                 validateDestination();
-                findDirection(mTravelMode);
+                if (inEditMode) {
+                    findPartialDirection();
+                } else {
+                    validateOrigin();
+                    findDirection(mTravelMode);
+                }
             }
             return false;
         });
@@ -474,7 +479,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 handler.postDelayed(runnable, delay);
 
                 mGoButton.setImageResource(R.drawable.ic_close);
-                setSimpleLayout();
+                setBikingModeLayout();
             } else {
                 mMap.clear();
                 animateCameraWithZoomBearingAndTilt(DEFAULT_ZOOM, 0, 0);
@@ -765,6 +770,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      */
     private void findPartialDirection() {
         spinner.start();
+
         markers.add(mMap.addMarker(new MarkerOptions()
                 .position(destinationLatLng)
                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE))));
@@ -831,9 +837,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             places.release();
         } else {
             destinationLatLng = places.get(0).getLatLng();
+
+            if (inEditMode) {
+                findPartialDirection();
+            } else {
+                validateOrigin();
+                findDirection(mTravelMode);
+            }
             places.release();
-            validateOrigin();
-            findDirection(mTravelMode);
         }
     };
 
@@ -969,11 +980,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Log.e(TAG, "Connection Failed: " + connectionResult.getErrorMessage());
     }
 
-//    @Override
-//    public boolean onTouchEvent(MotionEvent event) {
-//        return super.onTouchEvent(event);
-//    }
-
     /**
      * Method Overridden from RouteBuilderListener interface.
      */
@@ -1023,6 +1029,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      */
     private void setReviewLayout() {
         mDestinationLayout.setVisibility(View.GONE);
+        setMargins(mDestinationLayout, 10, 10, 10, 0);
+        mOriginLayout.setVisibility(View.GONE);
         mMenu.setVisibility(View.GONE);
         mSlidingPanel.setTouchEnabled(false);
         mSkipButton.setVisibility(View.VISIBLE);
@@ -1035,7 +1043,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      * Changes the Activity Layout for biking mode.
      * Clears everything apart from the route, current location and the cancel button.
      */
-    private void setSimpleLayout() {
+    private void setBikingModeLayout() {
         mMenu.close(false);
         mMenu.setVisibility(View.GONE);
         mDestinationLayout.setVisibility(View.GONE);
@@ -1051,6 +1059,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private void setNormalLayout() {
         mMenu.setVisibility(View.VISIBLE);
         mDestinationLayout.setVisibility(View.VISIBLE);
+        setMargins(mDestinationLayout, 10, 10, 10, 0);
+        mOriginLayout.setVisibility(View.GONE);
         setMenuNormalLayout();
     }
 
