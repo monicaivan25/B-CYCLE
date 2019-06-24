@@ -2,9 +2,9 @@ package com.example.monica.b_cycle;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -15,7 +15,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.example.monica.b_cycle.exceptions.LocationNotFoundException;
+import com.example.monica.b_cycle.ui.Spinner;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
@@ -26,6 +26,7 @@ public class LoginActivity extends AppCompatActivity {
 
     public static String email;
 
+    private Spinner spinner;
     private EditText mEmailField;
     private EditText mPasswordField;
     private Button mLoginButton;
@@ -37,6 +38,7 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
+        spinner = new Spinner(findViewById(R.id.progressBar1), findViewById(R.id.progress_background));
         mEmailField = findViewById(R.id.email);
         mPasswordField = findViewById(R.id.password);
         mLoginButton = findViewById(R.id.login_button);
@@ -84,6 +86,7 @@ public class LoginActivity extends AppCompatActivity {
     private void initLoginButton() {
         mLoginButton.setOnClickListener(v -> {
             if (isFormValid()) {
+                spinner.start();
                 mAuth.signInWithEmailAndPassword(mEmailField.getText().toString(), mPasswordField.getText().toString())
                         .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                             @Override
@@ -92,10 +95,13 @@ public class LoginActivity extends AppCompatActivity {
                                     Log.d("LOGIN", "signInWithEmail:success");
                                     FirebaseUser user = mAuth.getCurrentUser();
                                     email = user.getEmail();
+                                    spinner.stop();
                                     goToMap();
                                 } else {
                                     Toast.makeText(LoginActivity.this, "Authentication failed.",
                                             Toast.LENGTH_SHORT).show();
+                                    spinner.stop();
+
                                 }
                             }
                         });
@@ -106,15 +112,19 @@ public class LoginActivity extends AppCompatActivity {
     private void initRegisterButton() {
         mRegisterButton.setOnClickListener(v -> {
             if (isFormValid()) {
+                spinner.start();
                 mAuth.createUserWithEmailAndPassword(mEmailField.getText().toString(), mPasswordField.getText().toString())
                         .addOnCompleteListener(this, task -> {
                             if (task.isSuccessful()) {
                                 FirebaseUser user = mAuth.getCurrentUser();
                                 email = user.getEmail();
+                                spinner.stop();
                                 goToMap();
                             } else {
                                 Toast.makeText(LoginActivity.this, "Registration failed.",
                                         Toast.LENGTH_SHORT).show();
+                                spinner.stop();
+
                             }
                         });
             }

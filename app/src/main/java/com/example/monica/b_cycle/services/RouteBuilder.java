@@ -12,9 +12,11 @@ import com.example.monica.b_cycle.model.Elevation;
 import com.example.monica.b_cycle.model.Route;
 import com.example.monica.b_cycle.model.TravelMode;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.Dot;
 import com.google.android.gms.maps.model.Gap;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PatternItem;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
@@ -58,7 +60,17 @@ public class RouteBuilder implements RouteFinderListener, ElevationFinderListene
             allBikePoints.addAll(route.getPointList());
         });
     }
+    private void drawdummyroute(Route drivingRoute){
+        PolylineOptions roadPoly = getNewDottedPoly();
+        List<LatLng> drivingRoutePointList = drivingRoute.getPointList();
+        for(LatLng point:drivingRoutePointList){
+        mMap.addMarker(new MarkerOptions()
+                .position(point)
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)));}
+        roadPoly.addAll(drivingRoutePointList);
+        mMap.addPolyline(roadPoly);
 
+    }
     /**
      * Draws the combined route formed of Road + Bicycle lanes or Sidewalk + bicycle lanes
      *

@@ -7,6 +7,28 @@
     android:background="#FFFFFF"
     tools:context=".LoginActivity">
 
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <View
+            android:id="@+id/progress_background"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#FFFFFF"
+            android:visibility="gone" />
+
+        <ProgressBar
+            android:id="@+id/progressBar1"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:visibility="gone" />
+    </RelativeLayout>
+
+
     <ImageView
         android:layout_width="130dp"
         android:layout_height="130dp"
@@ -21,7 +43,6 @@
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="80dp"
         android:gravity="center_vertical|center_horizontal">
-
 
         <EditText
             android:id="@+id/email"

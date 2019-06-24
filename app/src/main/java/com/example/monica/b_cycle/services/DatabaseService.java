@@ -1,10 +1,8 @@
 package com.example.monica.b_cycle.services;
 
-import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
-import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -16,7 +14,6 @@ import com.example.monica.b_cycle.model.PendingRoute;
 import com.example.monica.b_cycle.model.PendingRouteDao;
 import com.example.monica.b_cycle.model.Route;
 import com.example.monica.b_cycle.model.RouteDao;
-import com.google.android.gms.maps.model.LatLng;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -33,11 +30,11 @@ public class DatabaseService {
 
     private DatabaseReference mRootRef;
     private RouteDaoMapper mapper = new RouteDaoMapper();
-    private PendingRouteMapper pendingRouteMapper = new PendingRouteMapper();
-    private MapsActivity mapsActivity;
+    private static PendingRouteMapper pendingRouteMapper = new PendingRouteMapper();
+    private static MapsActivity mapsActivity;
     private final int MIN_DISTANCE_IN_METERS = 100;
 
-    private List<PendingRouteDao> pendingRouteDaos;
+    private static List<PendingRouteDao> pendingRouteDaos;
 
     public DatabaseService(MapsActivity mapsActivity) {
         this.mRootRef = FirebaseDatabase.getInstance().getReference();
@@ -105,28 +102,6 @@ public class DatabaseService {
                         && !pendingRouteDao.getFlags().contains(LoginActivity.email));
 
         if (thereAreRoutesByOtherUsers) {
-            @SuppressLint("ValidFragment")
-            class RouteReviewDialog extends DialogFragment {
-                @Override
-                public Dialog onCreateDialog(Bundle savedInstanceState) {
-                    AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-                    builder.setTitle("New bike lanes available in your area");
-                    builder.setMessage("Would you like to review them?")
-                            .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                    List<PendingRoute> pendingRoutes = new ArrayList<>();
-                                    pendingRouteDaos.forEach(pendingRouteDao ->
-                                            pendingRoutes.add(pendingRouteMapper.map(pendingRouteDao)));
-                                    mapsActivity.startReview(pendingRoutes);
-                                }
-                            })
-                            .setNegativeButton("Not now", new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                }
-                            });
-                    return builder.create();
-                }
-            }
             new RouteReviewDialog().show(mapsActivity.getSupportFragmentManager(), "Starting Route Review");
         }
     }
@@ -139,7 +114,6 @@ public class DatabaseService {
     public void addToDatabase(Route route) {
         DatabaseReference newRouteRef = mRootRef.child("pending").push();
         LocationUtils.expandPath(route, 100);
-//        newRouteRef.setValue(route);
         newRouteRef.setValue(new PendingRouteDao(LoginActivity.email, LoginActivity.email, mapper.map(route)));
     }
 
@@ -160,6 +134,28 @@ public class DatabaseService {
                     .child(pendingRouteDao.getKey())
                     .child("flags")
                     .setValue(pendingRouteDao.getFlags());
+        }
+    }
+
+    public static class RouteReviewDialog extends DialogFragment {
+        @Override
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+            builder.setTitle("New bike lanes available in your area");
+            builder.setMessage("Would you like to review them?")
+                    .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            List<PendingRoute> pendingRoutes = new ArrayList<>();
+                            pendingRouteDaos.forEach(pendingRouteDao ->
+                                    pendingRoutes.add(pendingRouteMapper.map(pendingRouteDao)));
+                            mapsActivity.startReview(pendingRoutes);
+                        }
+                    })
+                    .setNegativeButton("Not now", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                        }
+                    });
+            return builder.create();
         }
     }
 }

@@ -13,7 +13,7 @@ public class LocationUtils {
      *
      * @param route
      */
-    public static void expandPath(Route route, int min_distance_in_meters) {
+    public static void expandPath(Route route, int minDistanceInMeters) {
         List<LatLng> pointList = route.getPointList();
         LocationUtils locationUtils = new LocationUtils();
         for (int i = 0; i < pointList.size() - 1; i++) {
@@ -22,8 +22,8 @@ public class LocationUtils {
             LatLng pointB = pointList.get(i + 1);
             Location.distanceBetween(pointA.latitude, pointA.longitude,
                     pointB.latitude, pointB.longitude, distance);
-            if (distance[0] > min_distance_in_meters) {
-                pointList.add(i + 1, locationUtils.getNewPointBetweenAAndB(pointA, pointB, distance[0], min_distance_in_meters));
+            if (distance[0] > minDistanceInMeters) {
+                pointList.add(i + 1, locationUtils.getNewPointBetweenAAndB(pointA, pointB, distance[0], minDistanceInMeters));
             }
         }
     }
