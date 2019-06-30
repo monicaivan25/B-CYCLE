@@ -441,7 +441,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      */
     private void initSaveButton() {
         mSaveButton.setOnClickListener(v -> {
-            db.addToDatabase(mRoute);
+            if (mRoute != null) {
+                db.addToDatabase(mRoute);
+            }
         });
     }
 
@@ -512,24 +514,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private void initUndoButton() {
         mUndoButton.setOnClickListener(v -> {
             if (allPartialRoutes.size() > 0) {
-                LatLng lastDestination = markers.get(markers.size() - 2).getPosition();
-                Route routeToBeUndone = allPartialRoutes.get(allPartialRoutes.size() - 1);
-                Log.d("no.points", String.valueOf(mRoute.getPointList().size()));
-                Log.d("no.points", String.valueOf(routeToBeUndone.getPointList().size()));
+                try {
+                    LatLng lastDestination = markers.get(markers.size() - 2).getPosition();
+                    Route routeToBeUndone = allPartialRoutes.get(allPartialRoutes.size() - 1);
 
-                mRoute.getPointList().removeAll(routeToBeUndone.getPointList());
-                Log.d("no.points", String.valueOf(mRoute.getPointList().size()));
-                mRoute.setDestination(new SimpleAddress(null, lastDestination));
-                mRoute.getDistance().setValue(mRoute.getDistance().getValue() - routeToBeUndone.getDistance().getValue());
+                    mRoute.getPointList().removeAll(routeToBeUndone.getPointList());
+                    mRoute.setDestination(new SimpleAddress(null, lastDestination));
+                    mRoute.getDistance().setValue(mRoute.getDistance().getValue() - routeToBeUndone.getDistance().getValue());
 
-                originLatLng = lastDestination;
-                destinationLatLng = lastDestination;
+                    originLatLng = lastDestination;
+                    destinationLatLng = lastDestination;
+                    markers.get(markers.size() - 1).remove();
+                    markers.remove(markers.size() - 1);
+                    allCustomRoutePolylines.get(allCustomRoutePolylines.size() - 1)
+                            .forEach(Polyline::remove);
+                    allCustomRoutePolylines.remove(allCustomRoutePolylines.size() - 1);
 
-                markers.get(markers.size() - 1).remove();
-                markers.remove(markers.size() - 1);
-                allCustomRoutePolylines.get(allCustomRoutePolylines.size() - 1)
-                        .forEach(Polyline::remove);
-                allCustomRoutePolylines.remove(allCustomRoutePolylines.size() - 1);
+                } catch (ArrayIndexOutOfBoundsException ignored) {
+                }
             }
         });
     }
